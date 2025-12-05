@@ -2,9 +2,10 @@ from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, T
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 from datetime import datetime
+from app.core.models_base import TimestampMixin
 
 
-class User(Base):
+class User(Base, TimestampMixin):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -12,10 +13,13 @@ class User(Base):
     password = Column(String(255), nullable=False)
     name = Column(String(50), nullable=True)
 
+    last_login_time = Column(DateTime, nullable=True)
+    last_login_ip = Column(String(50), nullable=True)
+
     refresh_tokens = relationship("RefreshToken", back_populates="user")
 
 
-class RefreshToken(Base):
+class RefreshToken(Base, TimestampMixin):
     __tablename__ = "refresh_tokens"
 
     id = Column(Integer, primary_key=True, index=True)

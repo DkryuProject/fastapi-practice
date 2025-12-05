@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from app.core.database import get_db
@@ -12,8 +12,14 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 @router.post("/login", response_model=user_schemas.Token)
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+
     res = user_service.login(db, form_data.username, form_data.password)
+    ip = request.client.host
+    ua = request.headers.get("user-agent", "")
+
+    user_service.update_login_info(db, res["user"], ip, ua)
+
     return {
         "access_token": res["access_token"],
         "refresh_token": res["refresh_token"],

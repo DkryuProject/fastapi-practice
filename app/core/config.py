@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from datetime import timedelta
+from urllib.parse import quote_plus
 
 
 class Settings(BaseSettings):
@@ -19,9 +20,13 @@ class Settings(BaseSettings):
         env_file = ".env"
 
     @property
+    def encoded_password(self) -> str:
+        return quote_plus(self.mysql_password)
+
+    @property
     def database_url(self) -> str:
         return (
-            f"mysql+mysqldb://{self.mysql_user}:{self.mysql_password}"
+            f"mysql+mysqldb://{self.mysql_user}:{self.encoded_password}"
             f"@{self.mysql_host}:{self.mysql_port}/{self.mysql_db}?charset=utf8mb4"
         )
 

@@ -29,6 +29,13 @@ def get_users(db: Session):
     return db.query(models.User).all()
 
 
+def update_login_info(db: Session, user: models.User, ip: str, ua: str):
+    user.last_login_ip = ip
+    user.last_login_time = datetime.datetime.utcnow()
+    db.add(user)
+    db.commit()
+
+
 # Refresh token CRUD
 def create_refresh_token(db: Session, token_str: str, user_id: int, expires_at: datetime):
     rt = models.RefreshToken(
