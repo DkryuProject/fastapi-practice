@@ -5,6 +5,9 @@ from app.core.security import verify_password
 from app.core.jwt import create_access_token, create_refresh_token, decode_token
 from app.core.config import settings
 from datetime import datetime, timedelta
+import logging
+
+logger = logging.getLogger("app.user")
 
 
 def signup_user(db: Session, user: schemas.UserCreate):
