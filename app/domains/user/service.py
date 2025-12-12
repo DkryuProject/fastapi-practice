@@ -1,12 +1,14 @@
+import secrets
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from datetime import datetime
 from app.domains.user.crud import UserCRUD
 from app.core.security import hash_password,verify_password
 from app.core.jwt import decode_token, create_access_token, create_refresh_token
-from app.domains.user.schemas import UserSignup
+from app.domains.user.schemas import UserSignup, FindUserIDRequest, ResetPasswordRequest
 from app.core.exceptions import AppException
 from fastapi import UploadFile
+from app.utils.email import send_email
 
 import logging
 logger = logging.getLogger(__name__)
@@ -135,3 +137,37 @@ class UserService:
         db.commit()
 
         return True
+
+    @staticmethod
+    def find_user_id(db: Session, req: FindUserIDRequest) -> str:
+        user = UserCRUD.find_by_email_phone(db, req.email, req.phone)
+        if not user:
+            raise AppException("등록된 회원이 없습니다.", 404)
+        return user.user_id
+
+    @staticmethod
+    def reset_password(db: Session, req: ResetPasswordRequest) -> str:
+        user = UserCRUD.find_by_email_phone_userid(db, req.email, req.phone, req.user_id)
+        if not user:
+            raise AppException("회원 정보를 확인할 수 없습니다.", 404)
+
+        # 임시 비밀번호 생성 (8자리)
+        temp_password = secrets.token_urlsafe(8)
+
+        # DB 업데이트
+        UserCRUD.update_password(db, user, temp_password)
+
+        subject = "[서비스명] 임시 비밀번호 안내"
+        body = f"안녕하세요 {user.name}님,\n\n임시 비밀번호는 다음과 같습니다:\n\n{temp_password}\n\n로그인 후 반드시 비밀번호를 변경해주세요."
+        send_email(user.email, subject, body)
+
+        return temp_password
+    
+    @staticmethod
+    def change_password(db, user, old_password: str, new_password: str):
+        if not UserCRUD.verify_password(old_password, user.password):
+            raise AppException("기존 비밀번호가 일치하지 않습니다.", 400)
+
+        UserCRUD.update_password(db, user, new_password)
+        return "비밀번호가 변경되었습니다."
+    

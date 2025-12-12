@@ -3,7 +3,15 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 
 from app.core.database import get_db
-from app.domains.user.schemas import UserSignup
+from app.domains.user.schemas import (
+    UserSignup, 
+    FindUserIDRequest, 
+    FindUserIDResponse, 
+    ResetPasswordRequest, 
+    ResetPasswordResponse,
+    ChangePasswordRequest,
+    ChangePasswordResponse
+    )
 from app.domains.user.service import UserService
 from app.core.security import get_current_user
 from app.domains.user.models import User
@@ -128,3 +136,20 @@ def get_my_info(current_user: User = Depends(get_current_user)):
         "email": current_user.email,
         "name": current_user.name
     }
+
+@router.post("/find-id", response_model=FindUserIDResponse)
+def find_user_id(req: FindUserIDRequest, db: Session = Depends(get_db)):
+    user_id = UserService.find_user_id(db, req)
+    return FindUserIDResponse(user_id=user_id)
+
+
+@router.post("/reset-password", response_model=ResetPasswordResponse)
+def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
+    temp_pw = UserService.reset_password(db, req)
+    return ResetPasswordResponse(message="임시 비밀번호가 이메일로 발송되었습니다.")
+
+
+@router.post("/change-password", response_model=ChangePasswordResponse)
+def change_password(req: ChangePasswordRequest, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    msg = UserService.change_password(db, current_user, req.old_password, req.new_password)
+    return ChangePasswordResponse(message=msg)

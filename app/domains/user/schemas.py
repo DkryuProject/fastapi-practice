@@ -67,7 +67,7 @@ class UserSignup(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-        
+
 # -----------------------------
 # Login
 # -----------------------------
@@ -83,3 +83,41 @@ class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+
+
+# -----------------------------
+# 아이디 찾기
+# -----------------------------
+class FindUserIDRequest(BaseModel):
+    email: EmailStr
+    phone: str
+
+
+class FindUserIDResponse(BaseModel):
+    user_id: str
+
+
+# -----------------------------
+# 비밀번호 찾기
+# -----------------------------
+class ResetPasswordRequest(BaseModel):
+    user_id: str
+    email: EmailStr
+    phone: str
+
+
+class ResetPasswordResponse(BaseModel):
+    message: str
+
+
+# -----------------------------
+# 비밀번호 변경
+# -----------------------------
+class ChangePasswordRequest(BaseModel):
+    old_password: str
+    new_password: str
+
+
+class ChangePasswordResponse(BaseModel):
+    message: str
+    

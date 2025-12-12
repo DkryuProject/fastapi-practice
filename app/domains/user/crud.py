@@ -15,6 +15,10 @@ from app.domains.user.schemas import (
     UserBankInfoSchema
 )
 from app.utils.file import get_file_hash, validate_file, save_file
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 
 class UserCRUD:
     # ----------------------
@@ -176,3 +180,29 @@ class UserCRUD:
     def revoke_refresh_token(db: Session, refresh: RefreshToken):
         refresh.revoked = True
         db.commit()
+
+    @staticmethod
+    def find_by_email_phone(db: Session, email: str, phone: str) -> User:
+        return db.query(User).filter(User.email == email, User.profile.has(phone=phone)).first()
+
+    @staticmethod
+    def find_by_email_phone_userid(db: Session, email: str, phone: str, user_id: str) -> User:
+        return db.query(User).filter(
+            User.user_id == user_id,
+            User.email == email,
+            User.profile.has(phone=phone)
+        ).first()
+
+    @staticmethod
+    def update_password(db: Session, user: User, new_password: str) -> User:
+        hashed_pw = pwd_context.hash(new_password)
+        user.password = hashed_pw
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return user
+
+    @staticmethod
+    def verify_password(plain_password, hashed_password) -> bool:
+        return pwd_context.verify(plain_password, hashed_password)
+    
