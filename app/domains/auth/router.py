@@ -5,7 +5,7 @@ from app.core.database import get_db
 from app.domains.user.schemas import UserLogin, TokenResponse
 from app.domains.user.service import UserService
 
-router = APIRouter(prefix="/auth", tags=["Auth"])
+router = APIRouter()
 
 
 # -----------------------------

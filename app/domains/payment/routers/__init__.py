@@ -8,7 +8,7 @@ from .link_payment_router import router as link_router
 from .cash_receipt_router import router as cash_router
 
 # 통합 router 생성
-router = APIRouter(prefix="/payment", tags=["payment"])
+router = APIRouter()
 
 # 개별 라우터 포함
 router.include_router(payment_router)          

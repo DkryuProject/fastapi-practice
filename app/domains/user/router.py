@@ -21,7 +21,7 @@ from app.core.security import get_current_user
 from app.domains.user.models import User
 from app.core.exceptions import AppException
 
-router = APIRouter(prefix="/user", tags=["User"])
+router = APIRouter()
 
 
 # -----------------------------
