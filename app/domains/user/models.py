@@ -41,6 +41,7 @@ class User(Base, TimestampMixin):
     push_tokens = relationship("UserPushToken", back_populates="user")
     bank_info = relationship("UserBankInfo", uselist=False, back_populates="user")
     documents = relationship("UserDocument", back_populates="user")
+    payments = relationship("Payment", back_populates="user")
 
 
 # -----------------------------

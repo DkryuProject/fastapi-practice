@@ -64,12 +64,19 @@ class PaymentCRUD:
 
     # ----- detail save helpers -----
     @staticmethod
-    def save_sms_detail(db: Session, payment_id: int, payload: dict) -> PaymentSMS:
+    def save_sms_detail(db: Session, payment_id: int, payload: dict, result: dict) -> PaymentSMS:
         obj = PaymentSMS(
             payment_id=payment_id,
-            sms_provider=payload.get("provider") or payload.get("sms_provider"),
-            sms_transaction_id=payload.get("sms_tid") or payload.get("transaction_id"),
-            send_status=payload.get("status") or payload.get("send_status"),
+            product_name=payload.get("product_name"),
+            order_name=payload.get("order_name"),
+            amount=payload.get("amount"),
+            phone=payload.get("phone"),
+
+            rid=result.get("RID"),
+            code=result.get("resultCode"),
+            message=result.get("resultMessage"),
+            request_date=result.get("requestDate"),
+            send_status=result.get("status"),
         )
         db.add(obj)
         db.commit()

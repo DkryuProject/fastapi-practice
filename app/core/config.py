@@ -16,6 +16,11 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 30
 
+    # KORPAY
+    mid: str
+    mkey: str
+    sms_api_url: str
+
     class Config:
         env_file = ".env"
 

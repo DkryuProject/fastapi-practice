@@ -2,11 +2,11 @@ from pydantic import BaseModel
 from typing import Optional
 
 
-class SMSPaymentCreate(BaseModel):
-    order_number: str
+class SMSPaymentRequest(BaseModel):
     phone: str
-    message: str
     amount: int
+    product_name: str
+    order_name: str
 
 
 class SMSPaymentResult(BaseModel):

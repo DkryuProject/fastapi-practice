@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from app.domains.payment.crud import PaymentCRUD
 from app.domains.payment.schemas.payment_schemas import PaymentCreate, PaymentUpdate, PaymentLogCreate
 from app.domains.payment.services.state_machine import PaymentStateMachine
+from datetime import datetime
 
 
 class PaymentService:
@@ -33,8 +34,8 @@ class PaymentService:
         return PaymentCRUD.create_log(db, payment_id, log)
 
     @staticmethod
-    def save_sms_detail(db: Session, payment_id: int, payload: dict):
-        return PaymentCRUD.save_sms_detail(db, payment_id, payload)
+    def save_sms_detail(db: Session, payment_id: int, payload: dict, result: dict):
+        return PaymentCRUD.save_sms_detail(db, payment_id, payload, result)
 
     @staticmethod
     def save_link_detail(db: Session, payment_id: int, payload: dict):
@@ -57,3 +58,8 @@ class PaymentService:
         db.refresh(payment)
 
         return payment
+    
+    @staticmethod
+    def generate_order_number(prefix: str = "aisystem", seq: int = 1) -> str:
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        return f"{prefix}_{timestamp}_{seq:03d}"

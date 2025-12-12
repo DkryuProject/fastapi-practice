@@ -19,6 +19,6 @@ from .payment_link_schemas import (
     LinkPaymentResult
 )
 from .payment_sms_schemas import (
-    SMSPaymentCreate,
+    SMSPaymentRequest,
     SMSPaymentResult
 )

@@ -12,10 +12,9 @@ class Payment(Base, TimestampMixin):
 
     type = Column(String(20), nullable=False)  # sms, link, manual_card, cash_receipt
     amount = Column(Integer, nullable=False)
-    status = Column(String(20), nullable=False)
+    status = Column(String(20))
 
-    customer_name = Column(String(100))
-    phone = Column(String(50))
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
 
     sms_detail = relationship("PaymentSMS", back_populates="payment", uselist=False)
     link_detail = relationship("PaymentLink", back_populates="payment", uselist=False)
@@ -23,7 +22,7 @@ class Payment(Base, TimestampMixin):
     cash_receipt_detail = relationship("PaymentCashReceipt", back_populates="payment", uselist=False)
 
     logs = relationship("PaymentLog", back_populates="payment")
-
+    user = relationship("User", back_populates="payment")
 
 class PaymentSMS(Base, TimestampMixin):
     __tablename__ = "payment_sms"
@@ -31,8 +30,15 @@ class PaymentSMS(Base, TimestampMixin):
     id = Column(Integer, primary_key=True)
     payment_id = Column(Integer, ForeignKey("payment.id"), unique=True)
 
-    sms_provider = Column(String(50))
-    sms_transaction_id = Column(String(50))
+    product_name = Column(String(100))
+    order_name = Column(String(30))
+    amount = Column(Integer)
+    phone = Column(String(50))
+
+    rid = Column(String(10))
+    code = Column(String(4))
+    message = Column(String(100))
+    request_date = Column(String(14))
     send_status = Column(String(20))
 
     payment = relationship("Payment", back_populates="sms_detail")

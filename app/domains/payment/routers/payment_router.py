@@ -9,7 +9,12 @@ from app.domains.payment.schemas import PaymentCreate, PaymentResponse, PaymentU
 router = APIRouter()
 
 
-@router.post("/create", response_model=PaymentResponse)
+@router.get("/list", response_model=List[PaymentResponse])
+def list_payments(skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
+    return PaymentService.get_list(db, skip, limit)
+
+
+@router.post("/create", response_model=PaymentResponse, include_in_schema=False)
 def create_payment(data: PaymentCreate, db: Session = Depends(get_db)):
     return PaymentService.create_payment(db, data)
 
@@ -20,11 +25,6 @@ def get_payment(payment_id: int, db: Session = Depends(get_db)):
     if not obj:
         raise HTTPException(status_code=404, detail="payment not found")
     return obj
-
-
-@router.get("/list", response_model=List[PaymentResponse])
-def list_payments(skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
-    return PaymentService.get_list(db, skip, limit)
 
 
 @router.patch("/{payment_id}", response_model=PaymentResponse)
