@@ -170,4 +170,15 @@ class UserService:
 
         UserCRUD.update_password(db, user, new_password)
         return "비밀번호가 변경되었습니다."
+
+    @staticmethod
+    def save_token(db: Session, user_id: int, token: str, device_id: str, platform: str):
+        return UserCRUD.create_or_update_token(db, user_id, token, device_id, platform)
+
+    @staticmethod
+    def remove_token(db: Session, user_id: int, token: str):
+        deleted = UserCRUD.delete_token(db, user_id, token)
+        if not deleted:
+            raise AppException("해당 토큰이 존재하지 않습니다.", 404)
+        return True    
     

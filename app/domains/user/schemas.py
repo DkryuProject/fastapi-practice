@@ -120,4 +120,16 @@ class ChangePasswordRequest(BaseModel):
 
 class ChangePasswordResponse(BaseModel):
     message: str
-    
+
+
+# -----------------------------
+# 토큰 
+# -----------------------------
+class PushTokenRequest(BaseModel):
+    token: str
+    device_id: str
+    platform: str  # ios / android / web
+
+
+class PushTokenResponse(BaseModel):
+    message: str

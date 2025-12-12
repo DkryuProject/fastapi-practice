@@ -181,6 +181,9 @@ class UserDocument(Base, TimestampMixin):
     user = relationship("User", back_populates="documents")
 
 
+# -----------------------------
+# 업로드 히스토리 
+# -----------------------------
 class UploadHistory(Base, TimestampMixin):
     __tablename__ = "upload_history"
 

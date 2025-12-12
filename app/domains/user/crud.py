@@ -8,7 +8,8 @@ from app.domains.user.models import (
     UserDocument,
     UserPushSetting, 
     RefreshToken,
-    UploadHistory
+    UploadHistory,
+    UserPushToken
 )
 from app.domains.user.schemas import (
     UserSignup,
@@ -206,3 +207,37 @@ class UserCRUD:
     def verify_password(plain_password, hashed_password) -> bool:
         return pwd_context.verify(plain_password, hashed_password)
     
+    @staticmethod
+    def create_or_update_token(db: Session, user_id: int, token: str, device_id: str, platform: str) -> UserPushToken:
+        # 이미 존재하는 토큰 확인
+        existing = db.query(UserPushToken).filter_by(user_id=user_id, token=token).first()
+        if existing:
+            # 이미 존재하면 revoked=False로 업데이트
+            existing.revoked = False
+            existing.device_id = device_id
+            existing.platform = platform
+            db.add(existing)
+            db.commit()
+            db.refresh(existing)
+            return existing
+
+        # 신규 토큰 생성
+        new_token = UserPushToken(
+            user_id=user_id,
+            token=token,
+            device_id=device_id,
+            platform=platform
+        )
+        db.add(new_token)
+        db.commit()
+        db.refresh(new_token)
+        return new_token
+
+    @staticmethod
+    def delete_token(db: Session, user_id: int, token: str):
+        push_token = db.query(UserPushToken).filter_by(user_id=user_id, token=token).first()
+        if push_token:
+            db.delete(push_token)
+            db.commit()
+            return True
+        return False
