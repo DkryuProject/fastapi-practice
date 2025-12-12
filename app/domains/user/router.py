@@ -157,13 +157,13 @@ def change_password(req: ChangePasswordRequest, db: Session = Depends(get_db), c
     return ChangePasswordResponse(message=msg)
 
 
-@router.post("/save", response_model=PushTokenResponse)
+@router.post("/save-push-token", response_model=PushTokenResponse)
 def save_push_token(req: PushTokenRequest, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     UserService.save_token(db, current_user.id, req.token, req.device_id, req.platform)
     return PushTokenResponse(message="푸시 토큰 저장 완료")
 
 
-@router.delete("/delete", response_model=PushTokenResponse)
+@router.delete("/delete-push-token", response_model=PushTokenResponse)
 def delete_push_token(req: PushTokenRequest, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     UserService.remove_token(db, current_user.id, req.token)
     return PushTokenResponse(message="푸시 토큰 삭제 완료")
