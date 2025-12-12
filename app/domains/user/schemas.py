@@ -1,40 +1,78 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, List
+
+
+# -----------------------------
+# User Profile Info Schema
+# -----------------------------
+class UserProfileInfoSchema(BaseModel):
+    email: EmailStr
+    phone: str
+    birthday: str
+    gender: str
+    address: str
+    address_detail: str
+    zipcode: str
+
+
+# -----------------------------
+# Business Info Schema
+# -----------------------------
+class UserBusinessInfoSchema(BaseModel):
+    business_name: str
+    business_number: str
+    ceo_name: str
+    business_type: str
+    business_item: str
+    tel: str
+    business_address: str
+    business_address_detail: str
+    business_zipcode: str
+
+
+# -----------------------------
+# Bank Info Schema
+# -----------------------------
+class UserBankInfoSchema(BaseModel):
+    bank_name: str
+    account_number: str
+    holder_name: str
+
+
+# -----------------------------
+# Document Schema
+# -----------------------------
+class UserDocumentSchema(BaseModel):
+    doc_type: str  
 
 
 # -----------------------------
 # Signup
 # -----------------------------
 class UserSignup(BaseModel):
-    email: EmailStr
+    user_id: str
     password: str
     name: Optional[str] = None
+    adult_agree_yn: bool
+    my_info_agree_yn: bool
+    service_agree_yn: bool
+    special_agree_yn: bool
+    marketing_agree_yn: bool
 
-    # Profile Info
-    phone: Optional[str] = None
-    birthday: Optional[str] = None
-    gender: Optional[str] = None
-    address: Optional[str] = None
-    address_detail: Optional[str] = None
-    zipcode: Optional[str] = None
+    profile: Optional[UserProfileInfoSchema] = None
+    business: Optional[UserBusinessInfoSchema] = None
+    bank_info: Optional[UserBankInfoSchema] = None
+    documents: Optional[List[UserDocumentSchema]] = None
 
-    # Business Info
-    business_name: Optional[str] = None
-    business_number: Optional[str] = None
-    ceo_name: Optional[str] = None
-    business_type: Optional[str] = None
-    business_item: Optional[str] = None
-    tel: Optional[str] = None
-    business_address: Optional[str] = None
-    business_address_detail: Optional[str] = None
-    business_zipcode: Optional[str] = None
+    class Config:
+        arbitrary_types_allowed = True
 
-
+        
 # -----------------------------
 # Login
 # -----------------------------
 class UserLogin(BaseModel):
-    email: EmailStr
+    uaer_id: str
     password: str
 
 

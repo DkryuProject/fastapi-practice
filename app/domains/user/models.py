@@ -9,15 +9,20 @@ from app.core.models_base import TimestampMixin
 
 
 # -----------------------------
-# User (계정)
+# User
 # -----------------------------
 class User(Base, TimestampMixin):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    email = Column(String(255), unique=True, index=True, nullable=False)
+    user_id = Column(String(50), unique=True, index=True, nullable=False)
     password = Column(String(255), nullable=False)
     name = Column(String(50), nullable=True)
+    adult_agree_yn = Column(Boolean, nullable=True)
+    my_info_agree_yn = Column(Boolean, nullable=True)
+    service_agree_yn = Column(Boolean, nullable=True)
+    special_agree_yn = Column(Boolean, nullable=True)
+    marketing_agree_yn = Column(Boolean, nullable=True)
 
     last_login_time = Column(DateTime, nullable=True)
     last_login_ip = Column(String(50), nullable=True)
@@ -27,6 +32,8 @@ class User(Base, TimestampMixin):
     business = relationship("UserBusiness", uselist=False, back_populates="user")
     push_settings = relationship("UserPushSetting", uselist=False, back_populates="user")
     push_tokens = relationship("UserPushToken", back_populates="user")
+    bank_info = relationship("UserBankInfo", uselist=False, back_populates="user")
+    documents = relationship("UserDocument", back_populates="user")
 
 
 # -----------------------------
@@ -53,6 +60,7 @@ class UserProfile(Base, TimestampMixin):
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True)
+    email = Column(String(255), unique=True, index=True, nullable=False)
 
     phone = Column(String(20), nullable=True)
     birthday = Column(String(20), nullable=True)
@@ -136,3 +144,48 @@ class UserActionLog(Base, TimestampMixin):
     user_agent = Column(Text, nullable=True)
 
     user = relationship("User")
+
+
+# -----------------------------
+# User Bank Info (은행정보)
+# -----------------------------
+class UserBankInfo(Base, TimestampMixin):
+    __tablename__ = "user_bank_info"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True)
+
+    bank_name = Column(String(100), nullable=False)  
+    account_number = Column(String(50), nullable=False) 
+    holder_name = Column(String(50), nullable=False) 
+
+    user = relationship("User", back_populates="bank_info")
+
+
+# -----------------------------
+# User Document (유저 문서)
+# -----------------------------
+class UserDocument(Base, TimestampMixin):
+    __tablename__ = "user_document"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
+
+    doc_type = Column(String(50), nullable=False)  
+    file_name = Column(String(255), nullable=False)
+    file_url = Column(String(500), nullable=False)
+    file_hash = Column(String(500), index=True)
+    file_size = Column(Integer)
+    ext = Column(String)
+
+    user = relationship("User", back_populates="documents")
+
+
+class UploadHistory(Base, TimestampMixin):
+    __tablename__ = "upload_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+    file_name = Column(String(255))
+    file_hash = Column(String(500))
+    status = Column(String(20))
+    reason = Column(String(255), nullable=True)

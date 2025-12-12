@@ -1,11 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, UploadFile, File, Form
 from sqlalchemy.orm import Session
+from typing import List, Optional
 
 from app.core.database import get_db
 from app.domains.user.schemas import UserSignup
 from app.domains.user.service import UserService
 from app.core.security import get_current_user
 from app.domains.user.models import User
+from app.core.exceptions import AppException
 
 router = APIRouter(prefix="/user", tags=["User"])
 
@@ -14,18 +16,112 @@ router = APIRouter(prefix="/user", tags=["User"])
 # 회원가입
 # -----------------------------
 @router.post("/signup", summary="회원가입")
-def signup(payload: UserSignup, db: Session = Depends(get_db)):
+def signup(
+    # -----------------------------
+    # 기본 회원 정보
+    # -----------------------------
+    user_id: str = Form(...),
+    password: str = Form(...),
+    name: Optional[str] = Form(None),
+    adult_agree_yn: bool = Form(...),
+    my_info_agree_yn: bool = Form(...),
+    service_agree_yn: bool = Form(...),
+    special_agree_yn: bool = Form(...),
+    marketing_agree_yn: bool = Form(...),
+
+    # -----------------------------
+    # Profile Info
+    # -----------------------------
+    email: str = Form(...),
+    phone: str = Form(...),
+    birthday: str = Form(...),
+    gender: str = Form(...),
+    address: str = Form(...),
+    address_detail: str = Form(...),
+    zipcode: str = Form(...),
+
+    # -----------------------------
+    # Business Info
+    # -----------------------------
+    business_name: str = Form(...),
+    business_number: str = Form(...),
+    ceo_name: str = Form(...),
+    business_type: str = Form(...),
+    business_item: str = Form(...),
+    tel: str = Form(...),
+    business_address: str = Form(...),
+    business_address_detail: str = Form(...),
+    business_zipcode: str = Form(...),
+
+    # -----------------------------
+    # Bank Info
+    # -----------------------------
+    bank_name: str = Form(...),
+    account_number: str = Form(...),
+    holder_name: str = Form(...),
+
+    # -----------------------------
+    # Documents metadata + file
+    # -----------------------------
+    doc_types: List[str] = Form(...),     
+
+    files: List[UploadFile] = File(None),
+    db: Session = Depends(get_db)
+):
     try:
-        user = UserService.signup(db, payload)
-        return {"message": "회원가입 완료", "user_id": user.id}
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+        # -----------------------------
+        # Pydantic 객체 생성
+        # -----------------------------
+        signup_data = UserSignup(
+            user_id=user_id,
+            password=password,
+            name=name,
+            adult_agree_yn=adult_agree_yn,
+            my_info_agree_yn=my_info_agree_yn,
+            service_agree_yn=service_agree_yn,
+            special_agree_yn=special_agree_yn,
+            marketing_agree_yn=marketing_agree_yn,
+
+            profile={
+                "email": email,
+                "phone": phone,
+                "birthday": birthday,
+                "gender": gender,
+                "address": address,
+                "address_detail": address_detail,
+                "zipcode": zipcode
+            },
+
+            business={
+                "business_name": business_name,
+                "business_number": business_number,
+                "ceo_name": ceo_name,
+                "business_type": business_type,
+                "business_item": business_item,
+                "tel": tel,
+                "business_address": business_address,
+                "business_address_detail": business_address_detail,
+                "business_zipcode": business_zipcode
+            },
+
+            bank_info={
+                "bank_name": bank_name,
+                "account_number": account_number,
+                "holder_name": holder_name
+            },
+
+            documents=[{"doc_type": dt} for dt in doc_types]
         )
 
+        user = UserService.signup(db, signup_data, files)
 
-@router.get("/me")
+        return {"message": "회원가입 완료", "user_id": user.id}
+    
+    except Exception as e:
+        raise AppException(str(e), 400)
+
+
+@router.get("/me", summary="내 정보")
 def get_my_info(current_user: User = Depends(get_current_user)):
     return {
         "id": current_user.id,

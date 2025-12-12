@@ -5,7 +5,7 @@ from app.domains.user.router import router as user_router
 from app.domains.auth.router import router as auth_router
 from app.core.middleware import UserActionLogMiddleware
 from app.core.logging_config import setup_logging
-from app.core.scheduler import start_scheduler
+from app.scheduler import start_scheduler
 from app.domains.payment.routers import payment_routers
 from starlette.responses import Response
 from app.core.exception_handler import (
@@ -16,18 +16,18 @@ from app.core.exception_handler import (
 )
 from app.core.exceptions import AppException
 from fastapi.exceptions import HTTPException, RequestValidationError
+from fastapi.staticfiles import StaticFiles
 
 setup_logging()
 logger = logging.getLogger("app")
-
-# DEV ONLY — production = alembic
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="FastAPI")
 
 
 @app.on_event("startup")
 def startup_event():
+    # DEV ONLY — production = alembic
+    Base.metadata.create_all(bind=engine)
     start_scheduler()
 
 
@@ -51,6 +51,10 @@ async def full_logger(request: Request, call_next):
         headers=dict(response.headers),
         media_type=response.media_type
     )
+
+
+# 로컬 파일 접근 가능하게
+app.mount("/static", StaticFiles(directory="uploads"), name="static")
 
 
 app.add_middleware(UserActionLogMiddleware)

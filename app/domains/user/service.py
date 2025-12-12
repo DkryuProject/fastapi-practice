@@ -6,52 +6,58 @@ from app.core.security import hash_password,verify_password
 from app.core.jwt import decode_token, create_access_token, create_refresh_token
 from app.domains.user.schemas import UserSignup
 from app.core.exceptions import AppException
+from fastapi import UploadFile
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 class UserService:
     @staticmethod
-    def signup(db: Session, payload: UserSignup):
-        # 이메일 중복 체크
-        if UserCRUD.get_by_email(db, payload.email):
-            raise AppException("이미 가입된 이메일입니다.", 500)
+    def signup(db: Session, signup: UserSignup, files: list[UploadFile]):
+        try:
+            # UserID 중복 체크
+            if UserCRUD.get_by_userID(db, signup.user_id):
+                raise AppException("이미 가입된 ID입니다.", 400)
 
-        # 1) 유저 생성
-        user = UserCRUD.create_user(
-            db,
-            email=payload.email,
-            password=hash_password(payload.password),
-            name=payload.name,
-        )
+            if UserCRUD.get_by_email(db, signup.profile.email):
+                raise AppException("이미 가입된 이메일입니다.", 400)
+            
+            # 비밀번호 해시
+            hashed_pw = hash_password(signup.password)
 
-        # 2) 프로필 저장
-        profile_data = {
-            "phone": payload.phone,
-            "birthday": payload.birthday,
-            "gender": payload.gender,
-            "address": payload.address,
-            "address_detail": payload.address_detail,
-            "zipcode": payload.zipcode
-        }
-        UserCRUD.create_profile(db, user.id, profile_data)
+            # 유저 생성
+            user = UserCRUD.create_user(db, signup, hashed_pw)
 
-        # 3) 사업자 정보 저장
-        business_data = {
-            "business_name": payload.business_name,
-            "business_number": payload.business_number,
-            "ceo_name": payload.ceo_name,
-            "business_type": payload.business_type,
-            "business_item": payload.business_item,
-            "tel": payload.tel,
-            "address": payload.business_address,
-            "address_detail": payload.business_address_detail,
-            "zipcode": payload.business_zipcode
-        }
-        UserCRUD.create_business(db, user.id, business_data)
+            # 프로필 생성
+            UserCRUD.create_user_profile(db, user.id, signup)
 
-        # 4) 푸시 설정 초기화
-        UserCRUD.create_push_setting(db, user.id)
+            # 사업자 정보 생성
+            UserCRUD.create_user_business(db, user.id, signup)
 
-        return user
+            # 은행 정보 생성
+            if signup.bank_info:
+                UserCRUD.create_user_bank_info(db, user.id, signup.bank_info)
+
+            # 문서 정보 생성(중요 부분)
+            if signup.documents and files:
+                if len(signup.documents) != len(files):
+                    raise AppException("문서 정보와 파일 개수가 일치하지 않습니다.", 400)
+
+            for idx, meta in enumerate(signup.documents):
+                file: UploadFile = files[idx]
+                UserCRUD.create_user_documents(db, user.id, meta.doc_type, file)
+
+            # 모든 insert가 문제 없으면 commit
+            db.commit()
+            db.refresh(user)
+
+            return {"message": "회원가입 성공", "user_id": user.id}
+
+        except Exception as e:
+            db.rollback()
+            logger.exception("회원가입 실패: ", e)
+            raise AppException("회원가입에 실패하였습니다.", 500)
 
     @staticmethod
     def login(db: Session, email: str, password: str):
