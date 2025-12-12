@@ -1,67 +1,61 @@
 from sqlalchemy.orm import Session
-from . import models, schemas
-from app.core.security import hash_password
-from datetime import datetime, timedelta
-from app.core.config import settings
+from datetime import datetime
+from app.domains.user.models import (
+    User, UserProfile, UserBusiness, UserPushSetting, RefreshToken
+)
 
 
-def get_user_by_email(db: Session, email: str):
-    return db.query(models.User).filter(models.User.email == email).first()
+class UserCRUD:
 
+    @staticmethod
+    def get_by_email(db: Session, email: str):
+        return db.query(User).filter(User.email == email).first()
 
-def get_user(db: Session, user_id: int):
-    return db.query(models.User).filter(models.User.id == user_id).first()
-
-
-def create_user(db: Session, user: schemas.UserCreate):
-    db_user = models.User(
-        email=user.email,
-        password=hash_password(user.password),
-        name=user.name
-    )
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    return db_user
-
-
-def get_users(db: Session):
-    return db.query(models.User).all()
-
-
-def update_login_info(db: Session, user: models.User, ip: str, ua: str):
-    user.last_login_ip = ip
-    user.last_login_time = datetime.datetime.utcnow()
-    db.add(user)
-    db.commit()
-
-
-# Refresh token CRUD
-def create_refresh_token(db: Session, token_str: str, user_id: int, expires_at: datetime):
-    rt = models.RefreshToken(
-        token=token_str,
-        user_id=user_id,
-        expires_at=expires_at
-    )
-    db.add(rt)
-    db.commit()
-    db.refresh(rt)
-    return rt
-
-
-def get_refresh_token(db: Session, token_str: str):
-    return db.query(models.RefreshToken).filter(models.RefreshToken.token == token_str).first()
-
-
-def revoke_refresh_token(db: Session, token_str: str):
-    rt = get_refresh_token(db, token_str)
-    if rt:
-        rt.revoked = True
-        db.add(rt)
+    @staticmethod
+    def create_user(db: Session, email: str, password: str, name: str | None):
+        user = User(email=email, password=password, name=name)
+        db.add(user)
         db.commit()
-    return rt
+        db.refresh(user)
+        return user
 
+    @staticmethod
+    def create_profile(db: Session, user_id: int, data: dict):
+        profile = UserProfile(user_id=user_id, **data)
+        db.add(profile)
+        db.commit()
+        return profile
 
-def revoke_all_user_refresh_tokens(db: Session, user_id: int):
-    db.query(models.RefreshToken).filter(models.RefreshToken.user_id == user_id).update({"revoked": True})
-    db.commit()
+    @staticmethod
+    def create_business(db: Session, user_id: int, data: dict):
+        business = UserBusiness(user_id=user_id, **data)
+        db.add(business)
+        db.commit()
+        return business
+
+    @staticmethod
+    def create_push_setting(db: Session, user_id: int):
+        setting = UserPushSetting(user_id=user_id)
+        db.add(setting)
+        db.commit()
+        return setting
+
+    @staticmethod
+    def add_refresh_token(db: Session, user_id: int, token: str, expires_at: datetime):
+        refresh = RefreshToken(
+            user_id=user_id,
+            token=token,
+            expires_at=expires_at,
+        )
+        db.add(refresh)
+        db.commit()
+        return refresh
+
+    @staticmethod
+    def get_refresh_token(db: Session, token: str) -> RefreshToken | None:
+        return db.query(RefreshToken).filter(RefreshToken.token == token).first()
+
+    @staticmethod
+    def revoke_refresh_token(db: Session, refresh: RefreshToken):
+        refresh.revoked = True
+        db.commit()

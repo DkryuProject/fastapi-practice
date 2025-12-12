@@ -5,6 +5,7 @@ from pathlib import Path
 LOG_DIR = Path("logs")
 LOG_DIR.mkdir(exist_ok=True)
 
+
 def setup_logging():
     dictConfig({
         "version": 1,
@@ -26,7 +27,10 @@ def setup_logging():
             "console": {
                 "class": "logging.StreamHandler",
                 "formatter": "default",
+                "level": "DEBUG",
             },
+
+            # INFO 로그 핸들러
             "file_info": {
                 "class": "logging.handlers.TimedRotatingFileHandler",
                 "formatter": "detail",
@@ -34,7 +38,10 @@ def setup_logging():
                 "when": "midnight",
                 "backupCount": 7,
                 "encoding": "utf-8",
+                "level": "INFO",
             },
+
+            # ERROR 로그 핸들러
             "file_error": {
                 "class": "logging.handlers.TimedRotatingFileHandler",
                 "formatter": "detail",
@@ -42,15 +49,28 @@ def setup_logging():
                 "when": "midnight",
                 "backupCount": 7,
                 "encoding": "utf-8",
+                "level": "ERROR",
             },
         },
 
         "loggers": {
-            "uvicorn": {
-                "handlers": ["console"],
+            # -------------------------
+            # uvicorn log
+            # -------------------------
+            "uvicorn.error": {
                 "level": "INFO",
-                "propagate": False,
+                "handlers": ["console"],
+                "propagate": False
             },
+            "uvicorn.access": {
+                "level": "INFO",
+                "handlers": ["console"],
+                "propagate": False
+            },
+
+            # -------------------------
+            # application log
+            # -------------------------
             "app": {
                 "handlers": ["console", "file_info", "file_error"],
                 "level": "DEBUG",

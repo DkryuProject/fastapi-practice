@@ -1,79 +1,131 @@
-from sqlalchemy.orm import Session
 from fastapi import HTTPException
-from . import crud, schemas
-from app.core.security import verify_password
-from app.core.jwt import create_access_token, create_refresh_token, decode_token
-from app.core.config import settings
-from datetime import datetime, timedelta
-import logging
-
-logger = logging.getLogger("app.user")
-
-
-def signup_user(db: Session, user: schemas.UserCreate):
-    exist = crud.get_user_by_email(db, user.email)
-    if exist:
-        raise HTTPException(status_code=400, detail="Email already exists")
-    return crud.create_user(db, user)
+from sqlalchemy.orm import Session
+from datetime import datetime
+from app.domains.user.crud import UserCRUD
+from app.core.security import hash_password,verify_password
+from app.core.jwt import decode_token, create_access_token, create_refresh_token
+from app.domains.user.schemas import UserSignup
+from app.core.exceptions import AppException
 
 
-def authenticate_user(db: Session, email: str, password: str):
-    user = crud.get_user_by_email(db, email)
-    if not user:
-        return None
-    if not verify_password(password, user.password):
-        return None
-    return user
+class UserService:
+    @staticmethod
+    def signup(db: Session, payload: UserSignup):
+        # 이메일 중복 체크
+        if UserCRUD.get_by_email(db, payload.email):
+            raise AppException("이미 가입된 이메일입니다.", 500)
 
+        # 1) 유저 생성
+        user = UserCRUD.create_user(
+            db,
+            email=payload.email,
+            password=hash_password(payload.password),
+            name=payload.name,
+        )
 
-def login(db: Session, email: str, password: str):
-    user = authenticate_user(db, email, password)
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+        # 2) 프로필 저장
+        profile_data = {
+            "phone": payload.phone,
+            "birthday": payload.birthday,
+            "gender": payload.gender,
+            "address": payload.address,
+            "address_detail": payload.address_detail,
+            "zipcode": payload.zipcode
+        }
+        UserCRUD.create_profile(db, user.id, profile_data)
 
-    access_payload = {"sub": str(user.id)}
-    access_token = create_access_token(access_payload, expires_delta=settings.access_token_expires)
+        # 3) 사업자 정보 저장
+        business_data = {
+            "business_name": payload.business_name,
+            "business_number": payload.business_number,
+            "ceo_name": payload.ceo_name,
+            "business_type": payload.business_type,
+            "business_item": payload.business_item,
+            "tel": payload.tel,
+            "address": payload.business_address,
+            "address_detail": payload.business_address_detail,
+            "zipcode": payload.business_zipcode
+        }
+        UserCRUD.create_business(db, user.id, business_data)
 
-    refresh_payload = {"sub": str(user.id)}
-    refresh_token = create_refresh_token(refresh_payload, expires_delta=settings.refresh_token_expires)
+        # 4) 푸시 설정 초기화
+        UserCRUD.create_push_setting(db, user.id)
 
-    # store refresh token in DB with expiry
-    expires_at = datetime.utcnow() + settings.refresh_token_expires
-    crud.create_refresh_token(db, token_str=refresh_token, user_id=user.id, expires_at=expires_at)
+        return user
 
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "user": user
-    }
+    @staticmethod
+    def login(db: Session, email: str, password: str):
+        user = UserCRUD.get_by_email(db, email)
+        if not user:
+            raise Exception("존재하지 않는 이메일입니다.")
 
+        if not verify_password(password, user.password):
+            raise Exception("비밀번호가 일치하지 않습니다.")
 
-def refresh_access_token(db: Session, refresh_token: str):
-    # decode and verify signature/exp via decode_token
-    try:
-        payload = decode_token(refresh_token)
-    except Exception:
-        raise HTTPException(status_code=401, detail="Invalid refresh token")
+        # 리프레시 토큰 생성 및 저장
+        refresh_token, expires = create_refresh_token(user.id)
+        UserCRUD.add_refresh_token(db, user.id, refresh_token, expires)
 
-    # ensure token type is refresh
-    if payload.get("type") != "refresh":
-        raise HTTPException(status_code=401, detail="Token is not a refresh token")
+        # 액세스 토큰 생성
+        access_token = create_access_token(user.id)
 
-    rt = crud.get_refresh_token(db, refresh_token)
-    if not rt or rt.revoked:
-        raise HTTPException(status_code=401, detail="Refresh token revoked or not found")
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+        }
 
-    if rt.expires_at < datetime.utcnow():
-        raise HTTPException(status_code=401, detail="Refresh token expired")
+    @staticmethod
+    def refresh_tokens(db, refresh_token: str):
+        # 1. refresh token 해독 (서명 검증)
+        try:
+            payload = decode_token(refresh_token)
+        except Exception:
+            raise HTTPException(status_code=401, detail="유효하지 않은 Refresh Token 입니다.")
 
-    user = crud.get_user(db, int(payload.get("sub")))
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        if payload.get("type") != "refresh":
+            raise HTTPException(status_code=401, detail="Refresh Token 형식이 아닙니다.")
 
-    access_payload = {"sub": str(user.id)}
-    access_token = create_access_token(access_payload, expires_delta=settings.access_token_expires)
+        user_id = int(payload.get("sub"))
+        exp = payload.get("exp")
 
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token
-    }
+        # 2. DB에 존재하는지 확인
+        stored = UserCRUD.get_refresh_token(db, refresh_token)
+        if not stored:
+            raise HTTPException(status_code=401, detail="등록되지 않은 Refresh Token 입니다.")
+
+        # 3. 이미 폐기된 토큰인지 확인
+        if stored.revoked:
+            raise HTTPException(status_code=401, detail="이미 폐기된 Refresh Token 입니다.")
+
+        # 4. 만료 여부 체크
+        if datetime.utcnow().timestamp() > exp:
+            stored.revoked = True
+            db.commit()
+            raise HTTPException(status_code=401, detail="Refresh Token 이 만료되었습니다.")
+
+        # 5. 기존 Refresh Token 폐기
+        stored.revoked = True
+        db.commit()
+
+        # 6. 새 Access Token & Refresh Token 발급
+        new_access = create_access_token(user_id)
+        new_refresh, expires = create_refresh_token(user_id)
+
+        # DB에 새 토큰 저장
+        UserCRUD.add_refresh_token(db, user_id, new_refresh, expires)
+
+        return {
+            "access_token": new_access,
+            "refresh_token": new_refresh,
+        }
+
+    @staticmethod
+    def logout(db, refresh_token: str):
+        token = UserCRUD.get_refresh_token(db, refresh_token)
+        if not token:
+            raise HTTPException(status_code=400, detail="Refresh Token 이 존재하지 않습니다.")
+
+        token.revoked = True
+        db.commit()
+
+        return True

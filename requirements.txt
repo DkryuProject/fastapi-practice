@@ -8,3 +8,6 @@ passlib[bcrypt]
 python-jose[cryptography]
 python-multipart
 mysqlclient
+email_validator
+httpx
+apscheduler

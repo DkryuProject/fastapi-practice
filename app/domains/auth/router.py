@@ -1,70 +1,47 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+
 from app.core.database import get_db
-from app.domains.user import service as user_service, crud as user_crud, schemas as user_schemas
-from app.core.jwt import decode_token
-from app.core.config import settings
-from datetime import datetime
+from app.domains.user.schemas import UserLogin, TokenResponse
+from app.domains.user.service import UserService
 
-router = APIRouter()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
-@router.post("/login", response_model=user_schemas.Token)
-def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-
-    res = user_service.login(db, form_data.username, form_data.password)
-    ip = request.client.host
-    ua = request.headers.get("user-agent", "")
-
-    user_service.update_login_info(db, res["user"], ip, ua)
-
-    return {
-        "access_token": res["access_token"],
-        "refresh_token": res["refresh_token"],
-        "token_type": "bearer"
-    }
-
-
-@router.post("/refresh", response_model=user_schemas.Token)
-def refresh(refresh_token: str, db: Session = Depends(get_db)):
-    res = user_service.refresh_access_token(db, refresh_token)
-    return {
-        "access_token": res["access_token"],
-        "refresh_token": res["refresh_token"],
-        "token_type": "bearer"
-    }
-
-
-@router.post("/logout")
-def logout(refresh_token: str, db: Session = Depends(get_db)):
-    rt = user_crud.revoke_refresh_token(db, refresh_token)
-    if not rt:
-        raise HTTPException(status_code=400, detail="Refresh token not found")
-    return {"detail": "Logged out"}
-
-
-# Dependency to get current user from access token
-from fastapi import Request
-from app.domains.user import crud
-
-
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+# -----------------------------
+# 로그인
+# -----------------------------
+@router.post("/login", response_model=TokenResponse, summary="로그인")
+def login(payload: UserLogin, db: Session = Depends(get_db)):
     try:
-        payload = decode_token(token)
-    except Exception:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-    if payload.get("type") != "access":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not an access token")
-
-    user_id = int(payload.get("sub"))
-    user = crud.get_user(db, user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
+        tokens = UserService.login(db, payload.email, payload.password)
+        return tokens
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
 
 
-@router.get("/me", response_model=user_schemas.UserResponse)
-def me(current_user=Depends(get_current_user)):
-    return current_user
+# -----------------------------
+# Refresh Token 재발급
+# -----------------------------
+@router.post("/refresh", response_model=TokenResponse, summary="토큰 재발급")
+def refresh(refresh_token: str, db: Session = Depends(get_db)):
+    try:
+        tokens = UserService.refresh_tokens(db, refresh_token)
+        return tokens
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=str(e))
+
+
+# -----------------------------
+# Logout
+# -----------------------------
+@router.post("/logout", summary="로그아웃 (Refresh Token 폐기)")
+def logout(refresh_token: str, db: Session = Depends(get_db)):
+    try:
+        UserService.logout(db, refresh_token)
+        return {"message": "로그아웃 완료"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

@@ -3,6 +3,7 @@ from sqlalchemy import DateTime, func
 from sqlalchemy.orm import declarative_mixin, declared_attr
 from sqlalchemy import Column
 
+
 @declarative_mixin
 class TimestampMixin:
     created_at = Column(
