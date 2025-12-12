@@ -4,16 +4,15 @@ from app.core.database import get_db
 
 from app.domains.payment.interfaces.manual_provider import DummyManualProvider
 from app.domains.payment.services.manual_payment_service import ManualCardPaymentService
-from app.domains.payment.schemas.payment_manual_schemas import ManualCardPaymentCreate
-from app.domains.payment.schemas.payment_schemas import PaymentResponse
+from app.domains.payment.schemas import ManualCardPaymentCreate, PaymentResponse
 
-router = APIRouter(prefix="/payment/manual", tags=["payment-manual"])
+router = APIRouter()
 
 provider = DummyManualProvider()
 service = ManualCardPaymentService(provider)
 
 
-@router.post("/approve", response_model=PaymentResponse)
+@router.post("/request", response_model=PaymentResponse)
 def approve_card_payment(data: ManualCardPaymentCreate, db: Session = Depends(get_db)):
     payment = service.approve_card(db, data)
     if not payment:

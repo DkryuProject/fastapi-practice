@@ -3,10 +3,10 @@ from fastapi import FastAPI, Request, Response
 from app.core.database import Base, engine
 from app.domains.user.router import router as user_router
 from app.domains.auth.router import router as auth_router
+from app.domains.payment.routers import router as payment_router
 from app.core.middleware import UserActionLogMiddleware
 from app.core.logging_config import setup_logging
 from app.scheduler import start_scheduler
-from app.domains.payment.routers import payment_routers
 from starlette.responses import Response
 from app.core.exception_handler import (
     app_exception_handler,
@@ -65,6 +65,5 @@ app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
 app.include_router(user_router, prefix="/api/v1")
 app.include_router(auth_router, prefix="/api/v1")
-
-for router in payment_routers:
-    app.include_router(router, prefix="/api/v1")
+app.include_router(payment_router, prefix="/api/v1")
+    

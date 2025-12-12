@@ -4,12 +4,12 @@ from typing import List
 
 from app.core.database import get_db
 from app.domains.payment.services.payment_service import PaymentService
-from app.domains.payment.schemas.payment_schemas import PaymentCreate, PaymentResponse, PaymentUpdate
+from app.domains.payment.schemas import PaymentCreate, PaymentResponse, PaymentUpdate
 
-router = APIRouter(prefix="/payment", tags=["payment"])
+router = APIRouter()
 
 
-@router.post("/", response_model=PaymentResponse)
+@router.post("/create", response_model=PaymentResponse)
 def create_payment(data: PaymentCreate, db: Session = Depends(get_db)):
     return PaymentService.create_payment(db, data)
 
@@ -22,7 +22,7 @@ def get_payment(payment_id: int, db: Session = Depends(get_db)):
     return obj
 
 
-@router.get("/", response_model=List[PaymentResponse])
+@router.get("/list", response_model=List[PaymentResponse])
 def list_payments(skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
     return PaymentService.get_list(db, skip, limit)
 
