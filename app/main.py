@@ -59,8 +59,8 @@ app.add_exception_handler(Exception, unhandled_exception_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
-app.include_router(user_router, prefix="/api/v1/users", tags=["Users"])
-app.include_router(auth_router, prefix="/api/v1/auth", tags=["Auth"])
+app.include_router(user_router, prefix="/api/v1")
+app.include_router(auth_router, prefix="/api/v1")
 
 for router in payment_routers:
     app.include_router(router, prefix="/api/v1")
