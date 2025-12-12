@@ -1,11 +1,17 @@
+import enum
 from sqlalchemy import (
-    Column, Integer, String, Boolean, DateTime, ForeignKey, Text
+    Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Enum
 )
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
 from app.core.database import Base
 from app.core.models_base import TimestampMixin
+
+class UserStatusEnum(str, enum.Enum):
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"
+    SUSPENDED = "SUSPENDED"
 
 
 # -----------------------------
@@ -23,6 +29,7 @@ class User(Base, TimestampMixin):
     service_agree_yn = Column(Boolean, nullable=True)
     special_agree_yn = Column(Boolean, nullable=True)
     marketing_agree_yn = Column(Boolean, nullable=True)
+    status = Column(Enum(UserStatusEnum), nullable=False, default=UserStatusEnum.SUSPENDED)
 
     last_login_time = Column(DateTime, nullable=True)
     last_login_ip = Column(String(50), nullable=True)

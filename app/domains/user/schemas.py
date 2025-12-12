@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
+from app.domains.user.models import UserStatusEnum
 
 
 # -----------------------------
@@ -133,3 +134,16 @@ class PushTokenRequest(BaseModel):
 
 class PushTokenResponse(BaseModel):
     message: str
+
+
+# -----------------------------
+# 유저 상태 변경
+# -----------------------------
+class ChangeUserStatusRequest(BaseModel):
+    status: UserStatusEnum
+
+
+class ChangeUserStatusResponse(BaseModel):
+    message: str
+    user_id: int
+    new_status: UserStatusEnum

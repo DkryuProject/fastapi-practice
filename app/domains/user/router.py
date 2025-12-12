@@ -12,7 +12,9 @@ from app.domains.user.schemas import (
     ChangePasswordRequest,
     ChangePasswordResponse,
     PushTokenRequest,
-    PushTokenResponse
+    PushTokenResponse,
+    ChangeUserStatusRequest,
+    ChangeUserStatusResponse
     )
 from app.domains.user.service import UserService
 from app.core.security import get_current_user
@@ -167,3 +169,12 @@ def save_push_token(req: PushTokenRequest, db: Session = Depends(get_db), curren
 def delete_push_token(req: PushTokenRequest, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     UserService.remove_token(db, current_user.id, req.token)
     return PushTokenResponse(message="푸시 토큰 삭제 완료")
+
+@router.patch("/change-status", response_model=ChangeUserStatusResponse)
+def change_status(req: ChangeUserStatusRequest, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    user = UserService.change_user_status(db, current_user, req.status)
+    return ChangeUserStatusResponse(
+        message="상태 변경 완료",
+        user_id=user.id,
+        new_status=user.status
+    )

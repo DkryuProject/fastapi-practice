@@ -6,6 +6,7 @@ from app.domains.user.crud import UserCRUD
 from app.core.security import hash_password,verify_password
 from app.core.jwt import decode_token, create_access_token, create_refresh_token
 from app.domains.user.schemas import UserSignup, FindUserIDRequest, ResetPasswordRequest
+from app.domains.user.models import UserStatusEnum
 from app.core.exceptions import AppException
 from fastapi import UploadFile
 from app.utils.email import send_email
@@ -181,4 +182,11 @@ class UserService:
         if not deleted:
             raise AppException("해당 토큰이 존재하지 않습니다.", 404)
         return True    
+
+    @staticmethod
+    def change_user_status(db, user, new_status: UserStatusEnum):
+        if new_status not in UserStatusEnum:
+            raise AppException("유효하지 않은 상태값입니다.", 400)
+        user = UserCRUD.update_status(db, user, new_status)
+        return user    
     

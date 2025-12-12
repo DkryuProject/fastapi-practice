@@ -9,7 +9,8 @@ from app.domains.user.models import (
     UserPushSetting, 
     RefreshToken,
     UploadHistory,
-    UserPushToken
+    UserPushToken,
+    UserStatusEnum
 )
 from app.domains.user.schemas import (
     UserSignup,
@@ -31,6 +32,11 @@ class UserCRUD:
             email=signup.email,
             password=hashed_pw,
             name=signup.name,
+            adult_agree_yn=signup.adult_agree_yn,
+            my_info_agree_yn=signup.my_info_agree_yn,
+            service_agree_yn=signup.service_agree_yn,
+            special_agree_yn=signup.special_agree_yn,
+            marketing_agree_yn=signup.marketing_agree_yn,
         )
         db.add(user)
         db.flush()
@@ -241,3 +247,11 @@ class UserCRUD:
             db.commit()
             return True
         return False
+
+    @staticmethod
+    def update_status(db, user, new_status: UserStatusEnum):
+        user.status = new_status
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return user
