@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from app.domains.payment.schemas import SMSPaymentRequest, PaymentLogCreate
+from app.domains.payment.schemas import SMSPaymentRequest, PaymentLogCreate, PaymentCreate
 from app.domains.payment.interfaces.sms_provider import SMSProviderInterface
 from app.domains.payment.services import PaymentService
 
@@ -11,26 +11,17 @@ class SMSPaymentService:
     async def request_sms_payment(self, db: Session, data: SMSPaymentRequest):
         order_number = PaymentService.generate_order_number()
 
-        payment_payload = {
-            "order_number": order_number,
-            "type": "sms",
-            "amount": data.amount,
-            "phone": data.phone,
-            "product_name": data.product_name,
-            "order_name": data.order_name,
-        }
-
+        payment_payload = PaymentCreate(
+            order_number=order_number,
+            type="sms",
+            amount=data.amount,
+        )
         payment = PaymentService.create_payment(db, payment_payload)
 
         PaymentService.update_status(db, payment, "PENDING")
 
         try:
-            result = await self.provider.send_sms(
-                phone=data.phone,
-                amount=data.amount,
-                name=data.order_name,
-                product_name=data.product_name
-            )
+            result = await self.provider.send_sms(data)
 
             PaymentService.update_status(db, payment, "SUCCESS")
 
@@ -49,7 +40,7 @@ class SMSPaymentService:
             )
             raise e
 
-        PaymentService.save_sms_detail(db, payment.id, payment_payload, result)
+        PaymentService.save_sms_detail(db, payment.id, data, result)
 
         PaymentService.write_log(
             db,

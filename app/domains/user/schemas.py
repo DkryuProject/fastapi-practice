@@ -9,8 +9,6 @@ from app.domains.user.models import UserStatusEnum
 class UserProfileInfoSchema(BaseModel):
     email: EmailStr
     phone: str
-    birthday: str
-    gender: str
     address: str
     address_detail: str
     zipcode: str
@@ -73,7 +71,7 @@ class UserSignup(BaseModel):
 # Login
 # -----------------------------
 class UserLogin(BaseModel):
-    uaer_id: str
+    user_id: str
     password: str
 
 

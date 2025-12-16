@@ -30,7 +30,6 @@ def setup_logging():
                 "level": "DEBUG",
             },
 
-            # INFO 로그 핸들러
             "file_info": {
                 "class": "logging.handlers.TimedRotatingFileHandler",
                 "formatter": "detail",
@@ -41,7 +40,6 @@ def setup_logging():
                 "level": "INFO",
             },
 
-            # ERROR 로그 핸들러
             "file_error": {
                 "class": "logging.handlers.TimedRotatingFileHandler",
                 "formatter": "detail",
@@ -54,9 +52,6 @@ def setup_logging():
         },
 
         "loggers": {
-            # -------------------------
-            # uvicorn log
-            # -------------------------
             "uvicorn.error": {
                 "level": "INFO",
                 "handlers": ["console"],
@@ -67,10 +62,6 @@ def setup_logging():
                 "handlers": ["console"],
                 "propagate": False
             },
-
-            # -------------------------
-            # application log
-            # -------------------------
             "app": {
                 "handlers": ["console", "file_info", "file_error"],
                 "level": "DEBUG",

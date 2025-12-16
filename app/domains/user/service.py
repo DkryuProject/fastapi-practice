@@ -33,10 +33,12 @@ class UserService:
             user = UserCRUD.create_user(db, signup, hashed_pw)
 
             # 프로필 생성
-            UserCRUD.create_user_profile(db, user.id, signup)
+            if signup.profile:
+                UserCRUD.create_user_profile(db, user.id, signup.profile)
 
             # 사업자 정보 생성
-            UserCRUD.create_user_business(db, user.id, signup)
+            if signup.business:
+                UserCRUD.create_user_business(db, user.id, signup.business)
 
             # 은행 정보 생성
             if signup.bank_info:
@@ -55,21 +57,21 @@ class UserService:
             db.commit()
             db.refresh(user)
 
-            return {"message": "회원가입 성공", "user_id": user.id}
+            return user
 
         except Exception as e:
             db.rollback()
-            logger.exception("회원가입 실패: ", e)
+            logger.exception("회원가입 실패: %s", e)
             raise AppException("회원가입에 실패하였습니다.", 500)
 
     @staticmethod
-    def login(db: Session, email: str, password: str):
-        user = UserCRUD.get_by_email(db, email)
+    def login(db: Session, user_id: str, password: str):
+        user = UserCRUD.get_by_userID(db, user_id)
         if not user:
-            raise Exception("존재하지 않는 이메일입니다.")
+            raise AppException("존재하지 않는 ID입니다.", 400)
 
         if not verify_password(password, user.password):
-            raise Exception("비밀번호가 일치하지 않습니다.")
+            raise AppException("비밀번호가 일치하지 않습니다.", 400)
 
         # 리프레시 토큰 생성 및 저장
         refresh_token, expires = create_refresh_token(user.id)

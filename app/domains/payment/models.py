@@ -12,7 +12,7 @@ class Payment(Base, TimestampMixin):
 
     type = Column(String(20), nullable=False)  # sms, link, manual_card, cash_receipt
     amount = Column(Integer, nullable=False)
-    status = Column(String(20))
+    status = Column(String(20), default="INIT")
 
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
 
@@ -22,7 +22,8 @@ class Payment(Base, TimestampMixin):
     cash_receipt_detail = relationship("PaymentCashReceipt", back_populates="payment", uselist=False)
 
     logs = relationship("PaymentLog", back_populates="payment")
-    user = relationship("User", back_populates="payment")
+    user = relationship("User", back_populates="payments")
+
 
 class PaymentSMS(Base, TimestampMixin):
     __tablename__ = "payment_sms"
@@ -91,7 +92,7 @@ class PaymentLog(Base, TimestampMixin):
     payment_id = Column(Integer, ForeignKey("payment.id"), index=True)
 
     provider = Column(String(50))  # nicepay, sms_provider 등
-    action = Column(String(50))    # request, callback, cancel 등
+    action = Column(String(50))  # request, callback, cancel 등
 
     request_data = Column(JSON)
     response_data = Column(JSON)

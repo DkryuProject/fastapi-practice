@@ -7,14 +7,14 @@ from app.domains.payment.models import (
     PaymentManualCard,
     PaymentCashReceipt,
 )
-from app.domains.payment.schemas.payment_schemas import PaymentCreate, PaymentUpdate, PaymentLogCreate
+from app.domains.payment.schemas import PaymentUpdate, PaymentLogCreate, SMSPaymentResult, SMSPaymentRequest
 from typing import Optional
 
 
 class PaymentCRUD:
     @staticmethod
-    def create_payment(db: Session, data: PaymentCreate) -> Payment:
-        obj = Payment(**data.dict())
+    def create_payment(db: Session, data) -> Payment:
+        obj = Payment(**data.model_dump())
         db.add(obj)
         db.commit()
         db.refresh(obj)
@@ -64,19 +64,19 @@ class PaymentCRUD:
 
     # ----- detail save helpers -----
     @staticmethod
-    def save_sms_detail(db: Session, payment_id: int, payload: dict, result: dict) -> PaymentSMS:
+    def save_sms_detail(db: Session, payment_id: int, payload: SMSPaymentRequest, result: SMSPaymentResult) -> PaymentSMS:
         obj = PaymentSMS(
             payment_id=payment_id,
-            product_name=payload.get("product_name"),
-            order_name=payload.get("order_name"),
-            amount=payload.get("amount"),
-            phone=payload.get("phone"),
+            product_name=payload.product_name,
+            order_name=payload.order_name,
+            amount=payload.amount,
+            phone=payload.phone,
 
-            rid=result.get("RID"),
-            code=result.get("resultCode"),
-            message=result.get("resultMessage"),
-            request_date=result.get("requestDate"),
-            send_status=result.get("status"),
+            rid=result.rid,
+            code=result.code,
+            message=result.message,
+            request_date=result.request_date,
+            send_status=result.send_status,
         )
         db.add(obj)
         db.commit()

@@ -7,9 +7,7 @@ class PaymentBase(BaseModel):
     order_number: str
     type: str
     amount: int
-    status: str
-    customer_name: Optional[str] = None
-    phone: Optional[str] = None
+    status: Optional[str] = None
 
 
 class PaymentCreate(PaymentBase):

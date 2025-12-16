@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from app.domains.payment.crud import PaymentCRUD
-from app.domains.payment.schemas.payment_schemas import PaymentCreate, PaymentUpdate, PaymentLogCreate
+from app.domains.payment.schemas import PaymentCreate, PaymentUpdate, PaymentLogCreate, SMSPaymentRequest, SMSPaymentResult
 from app.domains.payment.services.state_machine import PaymentStateMachine
 from datetime import datetime
 
@@ -34,7 +34,7 @@ class PaymentService:
         return PaymentCRUD.create_log(db, payment_id, log)
 
     @staticmethod
-    def save_sms_detail(db: Session, payment_id: int, payload: dict, result: dict):
+    def save_sms_detail(db: Session, payment_id: int, payload: SMSPaymentRequest, result: SMSPaymentResult):
         return PaymentCRUD.save_sms_detail(db, payment_id, payload, result)
 
     @staticmethod

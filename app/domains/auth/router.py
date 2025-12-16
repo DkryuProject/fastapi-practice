@@ -14,7 +14,7 @@ router = APIRouter()
 @router.post("/login", response_model=TokenResponse, summary="로그인")
 def login(payload: UserLogin, db: Session = Depends(get_db)):
     try:
-        tokens = UserService.login(db, payload.email, payload.password)
+        tokens = UserService.login(db, payload.user_id, payload.password)
         return tokens
     except Exception as e:
         raise HTTPException(

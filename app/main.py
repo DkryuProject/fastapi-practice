@@ -1,7 +1,10 @@
 import logging
+import json
+
 from fastapi import FastAPI, Request, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.openapi.utils import get_openapi
+from pathlib import Path
 
 from app.core.database import Base, engine
 from app.core.middleware import UserActionLogMiddleware
@@ -35,23 +38,87 @@ app = FastAPI(
     }
 )
 
+
 @app.on_event("startup")
 def startup_event():
     Base.metadata.create_all(bind=engine)
     start_scheduler()
 
+
+SENSITIVE_KEYS = {"password", "access_token", "refresh_token"}
+MAX_BODY_LENGTH = 1000
+
+
+def safe_decode(body: bytes) -> str:
+    return body.decode("utf-8", errors="ignore")
+
+
+def mask_sensitive(data: dict) -> dict:
+    return {
+        k: ("***" if k in SENSITIVE_KEYS else v)
+        for k, v in data.items()
+    }
+
+
 @app.middleware("http")
 async def full_logger(request: Request, call_next):
-    req_body = await request.body()
-    logger.info(f"[REQUEST BODY] {req_body}")
+    content_type = request.headers.get("content-type", "")
 
+    # -------- Request --------
+    body_bytes = await request.body()
+    request._body = body_bytes
+
+    if body_bytes and "application/json" in content_type:
+        try:
+            body_json = json.loads(body_bytes.decode("utf-8"))
+            body_json = mask_sensitive(body_json)
+            body_log = json.dumps(body_json, ensure_ascii=False)
+        except Exception:
+            body_log = body_bytes.decode("utf-8", errors="ignore")
+
+        logger.info(
+            "[REQUEST] %s %s body=%s",
+            request.method,
+            request.url.path,
+            body_log
+        )
+
+    elif body_bytes and "multipart/form-data" in content_type:
+        logger.info(
+            "[REQUEST] %s %s (multipart/form-data, body=%d bytes)",
+            request.method,
+            request.url.path,
+            len(body_bytes)
+        )
+
+    else:
+        logger.info(
+            "[REQUEST] %s %s",
+            request.method,
+            request.url.path
+        )
+
+    # -------- Response --------
     response = await call_next(request)
 
     resp_body = b""
     async for chunk in response.body_iterator:
         resp_body += chunk
 
-    logger.info(f"[RESPONSE BODY] {resp_body}")
+    if response.status_code >= 400:
+        body_text = resp_body.decode("utf-8", errors="ignore")
+        logger.error(
+            "[RESPONSE] %s status=%s body=%s",
+            request.url.path,
+            response.status_code,
+            body_text
+        )
+    else:
+        logger.info(
+            "[RESPONSE] %s status=%s",
+            request.url.path,
+            response.status_code
+        )
 
     return Response(
         content=resp_body,
@@ -60,7 +127,13 @@ async def full_logger(request: Request, call_next):
         media_type=response.media_type
     )
 
-app.mount("/static", StaticFiles(directory="uploads"), name="static")
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+UPLOAD_DIR = BASE_DIR / "uploads"
+
+UPLOAD_DIR.mkdir(exist_ok=True)
+
+app.mount("/static", StaticFiles(directory=UPLOAD_DIR), name="static")
 
 app.add_middleware(UserActionLogMiddleware)
 app.add_exception_handler(AppException, app_exception_handler)
@@ -72,6 +145,7 @@ app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.include_router(user_router, prefix="/api/v1/user", tags=["User"])
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["Auth"])
 app.include_router(payment_router, prefix="/api/v1/payment", tags=["Payment"])
+
 
 # OpenAPI 커스터마이징
 def custom_openapi():
@@ -86,5 +160,6 @@ def custom_openapi():
     openapi_schema["info"]["x-logo"] = {"url": "https://example.com/logo.png"}
     app.openapi_schema = openapi_schema
     return app.openapi_schema
+
 
 app.openapi = custom_openapi

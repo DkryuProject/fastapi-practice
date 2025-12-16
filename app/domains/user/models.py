@@ -8,6 +8,7 @@ from datetime import datetime
 from app.core.database import Base
 from app.core.models_base import TimestampMixin
 
+
 class UserStatusEnum(str, enum.Enum):
     ACTIVE = "ACTIVE"
     INACTIVE = "INACTIVE"
@@ -41,7 +42,7 @@ class User(Base, TimestampMixin):
     push_tokens = relationship("UserPushToken", back_populates="user")
     bank_info = relationship("UserBankInfo", uselist=False, back_populates="user")
     documents = relationship("UserDocument", back_populates="user")
-    payments = relationship("Payment", back_populates="user")
+    payments = relationship("Payment", back_populates="user", cascade="all, delete-orphan")
 
 
 # -----------------------------
@@ -71,8 +72,6 @@ class UserProfile(Base, TimestampMixin):
     email = Column(String(255), unique=True, index=True, nullable=False)
 
     phone = Column(String(20), nullable=True)
-    birthday = Column(String(20), nullable=True)
-    gender = Column(String(10), nullable=True)
 
     address = Column(String(255), nullable=True)
     address_detail = Column(String(255), nullable=True)
@@ -163,9 +162,9 @@ class UserBankInfo(Base, TimestampMixin):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True)
 
-    bank_name = Column(String(100), nullable=False)  
-    account_number = Column(String(50), nullable=False) 
-    holder_name = Column(String(50), nullable=False) 
+    bank_name = Column(String(100), nullable=False)
+    account_number = Column(String(50), nullable=False)
+    holder_name = Column(String(50), nullable=False)
 
     user = relationship("User", back_populates="bank_info")
 
@@ -179,12 +178,12 @@ class UserDocument(Base, TimestampMixin):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
 
-    doc_type = Column(String(50), nullable=False)  
+    doc_type = Column(String(50), nullable=False)
     file_name = Column(String(255), nullable=False)
     file_url = Column(String(500), nullable=False)
     file_hash = Column(String(500), index=True)
     file_size = Column(Integer)
-    ext = Column(String)
+    ext = Column(String(50))
 
     user = relationship("User", back_populates="documents")
 

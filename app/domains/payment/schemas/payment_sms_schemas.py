@@ -10,6 +10,8 @@ class SMSPaymentRequest(BaseModel):
 
 
 class SMSPaymentResult(BaseModel):
-    sms_tid: str
+    rid: str
+    code: str
+    message: str
+    request_date: str
     send_status: str
-    raw: Optional[dict] = None

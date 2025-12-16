@@ -14,6 +14,8 @@ from app.domains.user.models import (
 )
 from app.domains.user.schemas import (
     UserSignup,
+    UserProfileInfoSchema,
+    UserBusinessInfoSchema,
     UserBankInfoSchema
 )
 from app.utils.file import get_file_hash, validate_file, save_file
@@ -29,7 +31,7 @@ class UserCRUD:
     @staticmethod
     def create_user(db: Session, signup: UserSignup, hashed_pw: str):
         user = User(
-            email=signup.email,
+            user_id=signup.user_id,
             password=hashed_pw,
             name=signup.name,
             adult_agree_yn=signup.adult_agree_yn,
@@ -47,12 +49,11 @@ class UserCRUD:
     # UserProfile 생성
     # ----------------------
     @staticmethod
-    def create_user_profile(db: Session, user_id: int, signup: UserSignup):
+    def create_user_profile(db: Session, user_id: int, signup: UserProfileInfoSchema):
         profile = UserProfile(
             user_id=user_id,
+            email=signup.email,
             phone=signup.phone,
-            birthday=signup.birthday,
-            gender=signup.gender,
             address=signup.address,
             address_detail=signup.address_detail,
             zipcode=signup.zipcode,
@@ -64,7 +65,7 @@ class UserCRUD:
     # UserBusiness 생성
     # ----------------------
     @staticmethod
-    def create_user_business(db: Session, user_id: int, signup: UserSignup):
+    def create_user_business(db: Session, user_id: int, signup: UserBusinessInfoSchema):
         if not signup.business_name:
             return None
 
