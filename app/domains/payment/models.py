@@ -14,14 +14,14 @@ class Payment(Base, TimestampMixin):
     amount = Column(Integer, nullable=False)
     status = Column(String(20), default="INIT")
 
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
-    sms_detail = relationship("PaymentSMS", back_populates="payment", uselist=False)
-    link_detail = relationship("PaymentLink", back_populates="payment", uselist=False)
-    manual_card_detail = relationship("PaymentManualCard", back_populates="payment", uselist=False)
-    cash_receipt_detail = relationship("PaymentCashReceipt", back_populates="payment", uselist=False)
+    sms_detail = relationship("PaymentSMS", back_populates="payment", uselist=False, cascade="all, delete-orphan")
+    link_detail = relationship("PaymentLink", back_populates="payment", uselist=False, cascade="all, delete-orphan")
+    manual_card_detail = relationship("PaymentManualCard", back_populates="payment", uselist=False, cascade="all, delete-orphan")
+    cash_receipt_detail = relationship("PaymentCashReceipt", back_populates="payment", uselist=False, cascade="all, delete-orphan")
 
-    logs = relationship("PaymentLog", back_populates="payment")
+    logs = relationship("PaymentLog", back_populates="payment", cascade="all, delete-orphan")
     user = relationship("User", back_populates="payments")
 
 

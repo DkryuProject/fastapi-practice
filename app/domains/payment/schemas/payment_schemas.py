@@ -4,6 +4,7 @@ from datetime import datetime
 
 
 class PaymentBase(BaseModel):
+    user_id: int
     order_number: str
     type: str
     amount: int

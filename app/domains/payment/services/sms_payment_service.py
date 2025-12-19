@@ -2,16 +2,18 @@ from sqlalchemy.orm import Session
 from app.domains.payment.schemas import SMSPaymentRequest, PaymentLogCreate, PaymentCreate
 from app.domains.payment.interfaces.sms_provider import SMSProviderInterface
 from app.domains.payment.services import PaymentService
+from app.domains.user.models import User
 
 
 class SMSPaymentService:
     def __init__(self, provider: SMSProviderInterface):
         self.provider = provider
 
-    async def request_sms_payment(self, db: Session, data: SMSPaymentRequest):
+    async def request_sms_payment(self, db: Session, data: SMSPaymentRequest, user: User):
         order_number = PaymentService.generate_order_number()
 
         payment_payload = PaymentCreate(
+            user_id=user.id,
             order_number=order_number,
             type="sms",
             amount=data.amount,
