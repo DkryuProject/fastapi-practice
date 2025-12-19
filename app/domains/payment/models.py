@@ -10,9 +10,10 @@ class Payment(Base, TimestampMixin):
     id = Column(Integer, primary_key=True, index=True)
     order_number = Column(String(30), unique=True, nullable=False, index=True)
 
-    type = Column(String(20), nullable=False)  # sms, link, manual_card, cash_receipt
+    type = Column(String(20), nullable=False)
     amount = Column(Integer, nullable=False)
-    status = Column(String(20), default="INIT")
+    status = Column(String(20), default="request")
+    interface_status = Column(String(20), default="INIT")
 
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 

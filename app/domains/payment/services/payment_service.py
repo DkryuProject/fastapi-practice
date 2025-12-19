@@ -59,9 +59,9 @@ class PaymentService:
 
     @staticmethod
     def update_status(db, payment, new_status: str):
-        PaymentStateMachine.assert_transition(payment.status, new_status)
+        PaymentStateMachine.assert_transition(payment.interface_status, new_status)
 
-        payment.status = new_status
+        payment.interface_status = new_status        
         db.commit()
         db.refresh(payment)
 
