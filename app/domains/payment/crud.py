@@ -4,10 +4,17 @@ from app.domains.payment.models import (
     PaymentLog,
     PaymentSMS,
     PaymentLink,
-    PaymentManualCard,
+    PaymentManual,
     PaymentCashReceipt,
 )
-from app.domains.payment.schemas import PaymentUpdate, PaymentLogCreate, SMSPaymentResult, SMSPaymentRequest
+from app.domains.payment.schemas import (
+    PaymentUpdate, 
+    PaymentLogCreate, 
+    SMSPaymentResult, 
+    SMSPaymentRequest,
+    ManualPaymentRequestLog,
+    ManualPaymentResult
+)
 from typing import Optional
 
 
@@ -97,13 +104,26 @@ class PaymentCRUD:
         return obj
 
     @staticmethod
-    def save_manual_card_detail(db: Session, payment_id: int, payload: dict) -> PaymentManualCard:
-        obj = PaymentManualCard(
+    def save_manual_detail(db: Session, payment_id: int, request: ManualPaymentRequestLog, result: ManualPaymentResult) -> PaymentManual:
+        obj = PaymentManual(
             payment_id=payment_id,
-            card_bin=payload.get("card_bin"),
-            card_last4=payload.get("last4") or payload.get("card_last4"),
-            approval_no=payload.get("approval_no"),
-            issuer=payload.get("issuer"),
+            amount = request.amount,
+            card_number = request.card_number,
+            expire = request.expire,
+            quota = request.quota,
+            buyer_name = request.buyer_name,
+            goods_name = request.goods_name,
+            phone = request.phone,
+
+            tid = result.tid,
+            code = result.code,
+            message = result.message,
+            app_number = result.app_number,
+            app_date = result.app_date,
+            van_cp_cd = result.van_cp_cd,
+            cp_cd = result.cp_cd,
+            van_iss_cp_cd = result.van_cp_cd,
+            iss_cp_cd = result.iss_cp_cd,
         )
         db.add(obj)
         db.commit()

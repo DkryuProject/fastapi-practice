@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     mid: str
     mkey: str
     sms_api_url: str
+    manual_api_url: str
 
     class Config:
         env_file = ".env"

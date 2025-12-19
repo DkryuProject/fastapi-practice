@@ -18,7 +18,7 @@ class Payment(Base, TimestampMixin):
 
     sms_detail = relationship("PaymentSMS", back_populates="payment", uselist=False, cascade="all, delete-orphan")
     link_detail = relationship("PaymentLink", back_populates="payment", uselist=False, cascade="all, delete-orphan")
-    manual_card_detail = relationship("PaymentManualCard", back_populates="payment", uselist=False, cascade="all, delete-orphan")
+    manual_card_detail = relationship("PaymentManual", back_populates="payment", uselist=False, cascade="all, delete-orphan")
     cash_receipt_detail = relationship("PaymentCashReceipt", back_populates="payment", uselist=False, cascade="all, delete-orphan")
 
     logs = relationship("PaymentLog", back_populates="payment", cascade="all, delete-orphan")
@@ -58,16 +58,29 @@ class PaymentLink(Base, TimestampMixin):
     payment = relationship("Payment", back_populates="link_detail")
 
 
-class PaymentManualCard(Base, TimestampMixin):
-    __tablename__ = "payment_manual_card"
+class PaymentManual(Base, TimestampMixin):
+    __tablename__ = "payment_manual"
 
     id = Column(Integer, primary_key=True)
     payment_id = Column(Integer, ForeignKey("payment.id"), unique=True)
 
-    card_bin = Column(String(10))
-    card_last4 = Column(String(4))
-    approval_no = Column(String(20))
-    issuer = Column(String(50))
+    amount = Column(Integer)
+    card_number = Column(String(20))
+    expire = Column(String(10))
+    quota = Column(String(10))
+    buyer_name = Column(String(50))
+    goods_name = Column(String(100))
+    phone = Column(String(50))
+
+    tid = Column(String(50))
+    code = Column(String(4))
+    message = Column(String(100))
+    app_number = Column(String(20))
+    app_date = Column(String(10))
+    van_cp_cd = Column(String(10))
+    cp_cd = Column(String(10))
+    van_iss_cp_cd = Column(String(10))
+    iss_cp_cd = Column(String(10))
 
     payment = relationship("Payment", back_populates="manual_card_detail")
 
@@ -91,8 +104,8 @@ class PaymentLog(Base, TimestampMixin):
     id = Column(Integer, primary_key=True)
     payment_id = Column(Integer, ForeignKey("payment.id"), index=True)
 
-    provider = Column(String(50))  # nicepay, sms_provider 등
-    action = Column(String(50))  # request, callback, cancel 등
+    provider = Column(String(50))
+    action = Column(String(50))
 
     request_data = Column(JSON)
     response_data = Column(JSON)

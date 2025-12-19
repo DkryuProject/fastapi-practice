@@ -1,6 +1,14 @@
 from sqlalchemy.orm import Session
 from app.domains.payment.crud import PaymentCRUD
-from app.domains.payment.schemas import PaymentCreate, PaymentUpdate, PaymentLogCreate, SMSPaymentRequest, SMSPaymentResult
+from app.domains.payment.schemas import (
+    PaymentCreate, 
+    PaymentUpdate,
+    PaymentLogCreate, 
+    SMSPaymentRequest, 
+    SMSPaymentResult,
+    ManualPaymentRequestLog,
+    ManualPaymentResult
+)
 from app.domains.payment.services.state_machine import PaymentStateMachine
 from datetime import datetime
 
@@ -42,8 +50,8 @@ class PaymentService:
         return PaymentCRUD.save_link_detail(db, payment_id, payload)
 
     @staticmethod
-    def save_manual_card_detail(db: Session, payment_id: int, payload: dict):
-        return PaymentCRUD.save_manual_card_detail(db, payment_id, payload)
+    def save_manual_detail(db: Session, payment_id: int, request: ManualPaymentRequestLog, result: ManualPaymentResult):
+        return PaymentCRUD.save_manual_detail(db, payment_id, request, result)
 
     @staticmethod
     def save_cash_receipt_detail(db: Session, payment_id: int, payload: dict):

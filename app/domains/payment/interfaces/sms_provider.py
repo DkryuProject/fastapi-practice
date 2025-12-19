@@ -58,13 +58,3 @@ class SMSProvider(SMSProviderInterface):
             request_date=raw.get("requestDate"),
             send_status=raw.get("status"),
         )
-
-
-class DummySMSProvider(SMSProviderInterface):
-    async def send_sms(self, data: SMSPaymentRequest) -> dict:
-        return {
-            "sms_tid": "SMS" + data.phone[-4:],
-            "status": "sent",
-            "provider": "dummy_sms",
-            "raw": {"phone": data.phone, "message": data.message},
-        }

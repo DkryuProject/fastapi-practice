@@ -7,8 +7,9 @@ from .payment_schemas import (
     PaymentLogResponse
 )
 from .payment_manual_schemas import (
-    ManualCardPaymentCreate,
-    ManualCardPaymentResult
+    ManualPaymentRequest,
+    ManualPaymentRequestLog,
+    ManualPaymentResult
 )
 from .cash_receipt_schemas import (
     CashReceiptCreate,

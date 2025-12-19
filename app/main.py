@@ -45,7 +45,7 @@ def startup_event():
     start_scheduler()
 
 
-SENSITIVE_KEYS = {"password", "access_token", "refresh_token"}
+SENSITIVE_KEYS = {"password", "access_token", "refresh_token", "card_number", "expire_month"}
 MAX_BODY_LENGTH = 1000
 
 
