@@ -21,7 +21,7 @@ from app.domains.user.schemas import (
 from app.utils.file import get_file_hash, validate_file, save_file
 from passlib.context import CryptContext
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 
 class UserCRUD:
@@ -191,13 +191,13 @@ class UserCRUD:
 
     @staticmethod
     def find_by_email_phone(db: Session, email: str, phone: str) -> User:
-        return db.query(User).filter(User.email == email, User.profile.has(phone=phone)).first()
+        return db.query(User).filter(User.profile.has(email=email), User.profile.has(phone=phone)).first()
 
     @staticmethod
     def find_by_email_phone_userid(db: Session, email: str, phone: str, user_id: str) -> User:
         return db.query(User).filter(
             User.user_id == user_id,
-            User.email == email,
+            User.profile.has(email=email),
             User.profile.has(phone=phone)
         ).first()
 

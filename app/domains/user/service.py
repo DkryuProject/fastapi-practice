@@ -161,9 +161,18 @@ class UserService:
         UserCRUD.update_password(db, user, temp_password)
 
         subject = "[서비스명] 임시 비밀번호 안내"
-        body = f"안녕하세요 {user.name}님,\n\n임시 비밀번호는 다음과 같습니다:\n\n{temp_password}\n\n로그인 후 반드시 비밀번호를 변경해주세요."
-        send_email(user.email, subject, body)
+        body = (
+            f"안녕하세요 {user.name}님,\n\n"
+            f"임시 비밀번호는 다음과 같습니다:\n\n"
+            f"{temp_password}\n\n"
+            f"로그인 후 반드시 비밀번호를 변경해주세요."
+        )
 
+        try:
+            send_email(user.profile.email, subject, body)
+        except Exception:
+            raise AppException("메일 발송에 실패했습니다.", 500)
+        
         return temp_password
     
     @staticmethod

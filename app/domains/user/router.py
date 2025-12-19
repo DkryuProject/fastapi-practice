@@ -150,12 +150,16 @@ def find_user_id(req: FindUserIDRequest, db: Session = Depends(get_db)):
 
 @router.post("/reset-password", response_model=ResetPasswordResponse)
 def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
-    temp_pw = UserService.reset_password(db, req)
+    UserService.reset_password(db, req)
     return ResetPasswordResponse(message="임시 비밀번호가 이메일로 발송되었습니다.")
 
 
 @router.post("/change-password", response_model=ChangePasswordResponse)
-def change_password(req: ChangePasswordRequest, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def change_password(
+    req: ChangePasswordRequest, 
+    db: Session = Depends(get_db), 
+    current_user=Depends(get_current_user)
+):
     msg = UserService.change_password(db, current_user, req.old_password, req.new_password)
     return ChangePasswordResponse(message=msg)
 
