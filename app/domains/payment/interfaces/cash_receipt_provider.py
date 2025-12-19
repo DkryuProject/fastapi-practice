@@ -8,9 +8,13 @@ from app.core.config import settings
 
 class CashReceiptProviderInterface(ABC):
     @abstractmethod
-    async def issue(self, order_number: str, amount: int, identity: str) -> dict:
+    async def check_member(self, business_number: str) -> dict:
         raise NotImplementedError()
 
+    @abstractmethod
+    async def issue(self, order_number: str, amount: int, identity: str) -> dict:
+        raise NotImplementedError()
+    
 class CashReceiptProvider(CashReceiptProviderInterface):
     cashbillService: ClassVar[CashbillService] = CashbillService(
         settings.LinkID,
@@ -21,6 +25,36 @@ class CashReceiptProvider(CashReceiptProviderInterface):
     cashbillService.IPRestrictOnOff = settings.IPRestrictOnOff
     cashbillService.UseStaticIP = settings.UseStaticIP
     cashbillService.UseLocalTimeYN = settings.UseLocalTimeYN
+
+    async def check_member(self, business_number: str) -> dict:
+        try:
+            corp_num = business_number
+
+            response = await asyncio.to_thread(
+                self.cashbillService.CheckIsMember ,
+                corp_num
+            )
+
+            return  {
+                "code": response.code,
+                "message": response.message,
+            }
+
+        except PopbillException as e:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": e.code,
+                    "message": e.message,
+                }
+            )
+
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=str(e)
+            )
+
 
     async def issue(self, order_number: str, amount: int, identity: str) -> dict:
         try:

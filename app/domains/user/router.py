@@ -136,7 +136,9 @@ def signup(
 def get_my_info(current_user: User = Depends(get_current_user)):
     return {
         "id": current_user.id,
-        "name": current_user.name
+        "user_id": current_user.user_id,
+        "name": current_user.name,
+        "status": current_user.status,
     }
 
 

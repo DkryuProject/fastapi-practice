@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import Optional, List
 from app.domains.user.models import UserStatusEnum
 
@@ -13,6 +13,7 @@ class UserProfileInfoSchema(BaseModel):
     address_detail: str
     zipcode: str
 
+    model_config = ConfigDict(from_attributes=True)
 
 # -----------------------------
 # Business Info Schema
