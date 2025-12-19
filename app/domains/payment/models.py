@@ -18,10 +18,13 @@ class Payment(Base, TimestampMixin):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
     sms_detail = relationship("PaymentSMS", back_populates="payment", uselist=False, cascade="all, delete-orphan")
-    link_detail = relationship("PaymentLink", back_populates="payment", uselist=False, cascade="all, delete-orphan")
     manual_card_detail = relationship("PaymentManual", back_populates="payment", uselist=False, cascade="all, delete-orphan")
     cash_receipt_detail = relationship("PaymentCashReceipt", back_populates="payment", uselist=False, cascade="all, delete-orphan")
-
+    link_request = relationship("PaymentLinkRequest", back_populates="payment", uselist=False, cascade="all, delete-orphan")
+    link_result = relationship("PaymentLinkResult", back_populates="payment", uselist=False, cascade="all, delete-orphan")
+    link_cancel = relationship("PaymentLinkCancel", back_populates="payment", uselist=False, cascade="all, delete-orphan")
+    link_enroll = relationship("PaymentLinkEnroll", back_populates="payment", uselist=False, cascade="all, delete-orphan")
+    
     logs = relationship("PaymentLog", back_populates="payment", cascade="all, delete-orphan")
     user = relationship("User", back_populates="payments")
 
@@ -46,8 +49,8 @@ class PaymentSMS(Base, TimestampMixin):
     payment = relationship("Payment", back_populates="sms_detail")
 
 
-class PaymentLink(Base, TimestampMixin):
-    __tablename__ = "payment_link"
+class PaymentLinkRequest(Base, TimestampMixin):
+    __tablename__ = "payment_link_request"
 
     id = Column(Integer, primary_key=True)
     payment_id = Column(Integer, ForeignKey("payment.id"), unique=True)
@@ -56,7 +59,46 @@ class PaymentLink(Base, TimestampMixin):
     pay_url = Column(String(200))
     expire_at = Column(DateTime)
 
-    payment = relationship("Payment", back_populates="link_detail")
+    payment = relationship("Payment", back_populates="link_request")
+
+
+class PaymentLinkResult(Base, TimestampMixin):
+    __tablename__ = "payment_link_result"
+
+    id = Column(Integer, primary_key=True)
+    payment_id = Column(Integer, ForeignKey("payment.id"), unique=True)
+
+    pg_tid = Column(String(100))
+    pay_url = Column(String(200))
+    expire_at = Column(DateTime)
+
+    payment = relationship("Payment", back_populates="link_result")
+
+
+class PaymentLinkCancel(Base, TimestampMixin):
+    __tablename__ = "payment_link_cancel"
+
+    id = Column(Integer, primary_key=True)
+    payment_id = Column(Integer, ForeignKey("payment.id"), unique=True)
+
+    pg_tid = Column(String(100))
+    pay_url = Column(String(200))
+    expire_at = Column(DateTime)
+
+    payment = relationship("Payment", back_populates="link_cancel")
+
+
+class PaymentLinkEnroll(Base, TimestampMixin):
+    __tablename__ = "payment_link_enroll"
+
+    id = Column(Integer, primary_key=True)
+    payment_id = Column(Integer, ForeignKey("payment.id"), unique=True)
+
+    pg_tid = Column(String(100))
+    pay_url = Column(String(200))
+    expire_at = Column(DateTime)
+
+    payment = relationship("Payment", back_populates="link_enroll")
 
 
 class PaymentManual(Base, TimestampMixin):

@@ -3,7 +3,7 @@ from app.domains.payment.models import (
     Payment,
     PaymentLog,
     PaymentSMS,
-    PaymentLink,
+    PaymentLinkRequest,
     PaymentManual,
     PaymentCashReceipt,
 )
@@ -91,8 +91,8 @@ class PaymentCRUD:
         return obj
 
     @staticmethod
-    def save_link_detail(db: Session, payment_id: int, payload: dict) -> PaymentLink:
-        obj = PaymentLink(
+    def save_link_detail(db: Session, payment_id: int, payload: dict) -> PaymentLinkRequest:
+        obj = PaymentLinkRequest(
             payment_id=payment_id,
             pg_tid=payload.get("tid") or payload.get("pg_tid"),
             pay_url=payload.get("pay_url"),
