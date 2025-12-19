@@ -2,7 +2,7 @@ import hashlib
 from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from jose import JWTError
+from jose import jwt, JWTError
 from datetime import datetime
 from passlib.context import CryptContext
 from app.core.database import get_db
@@ -10,7 +10,7 @@ from app.domains.user.models import User
 from app.core.config import settings
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token")
 
 
 def hash_password(password: str) -> str:

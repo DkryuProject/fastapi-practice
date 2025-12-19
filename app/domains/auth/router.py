@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.database import get_db
 from app.domains.user.schemas import UserLogin, TokenResponse
@@ -22,6 +23,24 @@ def login(payload: UserLogin, db: Session = Depends(get_db)):
             detail=str(e)
         )
 
+
+@router.post("/token", response_model=TokenResponse, summary="Swagger Token", include_in_schema=False)
+def login(
+    form_data: OAuth2PasswordRequestForm = Depends(), 
+    db: Session = Depends(get_db)
+):
+    username = form_data.username
+    password = form_data.password
+
+    try:
+        tokens = UserService.login(db, username, password)
+        return tokens
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    
 
 # -----------------------------
 # Refresh Token 재발급
