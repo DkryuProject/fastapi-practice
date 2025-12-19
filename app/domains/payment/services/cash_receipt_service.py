@@ -1,24 +1,28 @@
 from sqlalchemy.orm import Session
-from app.domains.payment.schemas.cash_receipt_schemas import CashReceiptCreate
-from app.domains.payment.schemas.payment_schemas import PaymentCreate, PaymentLogCreate
+from app.domains.payment.schemas import PaymentCreate, PaymentLogCreate, CashReceiptCreate
 from app.domains.payment.interfaces.cash_receipt_provider import CashReceiptProviderInterface
 from app.domains.payment.services.payment_service import PaymentService
+from app.domains.user.models import User
 
 
 class CashReceiptService:
     def __init__(self, provider: CashReceiptProviderInterface):
         self.provider = provider
 
-    def issue_receipt(self, db: Session, data: CashReceiptCreate):
+    async def issue_receipt(self, db: Session, data: CashReceiptCreate, user: User):
+        
+        order_number = PaymentService.generate_order_number()
+
         payment_payload = PaymentCreate(
-            order_number=data.order_number,
-            type="cash_receipt",
+            user_id=user.id,
+            order_number=order_number,
+            type="cash",
             amount=data.amount,
-            status="issued",
         )
+
         payment = PaymentService.create_payment(db, payment_payload)
 
-        result = self.provider.issue(data.amount, data.receipt_type, data.identity)
+        result = await self.provider.issue(data.amount, data.receipt_type, data.identity)
 
         PaymentService.write_log(
             db,

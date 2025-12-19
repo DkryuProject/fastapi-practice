@@ -22,6 +22,14 @@ class Settings(BaseSettings):
     sms_api_url: str
     manual_api_url: str
 
+    #popbill
+    LinkID: str
+    SecretKey: str
+    IsTest: str
+    IPRestrictOnOff: str
+    UseStaticIP: str
+    UseLocalTimeYN: str
+
     class Config:
         env_file = ".env"
 
