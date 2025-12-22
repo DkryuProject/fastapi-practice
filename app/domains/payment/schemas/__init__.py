@@ -12,6 +12,8 @@ from .payment_manual_schemas import (
     ManualPaymentResult
 )
 from .cash_receipt_schemas import (
+    CashBillUserRequest,
+    CashBillUserCreate,
     CashReceiptCreate,
     CashReceiptResult
 )

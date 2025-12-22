@@ -1,41 +1,36 @@
-import asyncio
 from abc import ABC, abstractmethod
-from typing import ClassVar
-from popbill import CashbillService, Cashbill, PopbillException
+from popbill import CashbillService, Cashbill, PopbillException, base
 from fastapi import HTTPException
 from app.core.config import settings
+from app.domains.payment.schemas import CashBillUserRequest
 
 
 class CashReceiptProviderInterface(ABC):
     @abstractmethod
-    async def check_member(self, business_number: str) -> dict:
+    def check_member(self, business_number: str) -> dict:
         raise NotImplementedError()
 
-    @abstractmethod
-    async def issue(self, order_number: str, amount: int, identity: str) -> dict:
+    def company_info(self, business_number: str) -> dict:
         raise NotImplementedError()
-    
+
+    def join_member(self, data: CashBillUserRequest) -> dict:
+        raise NotImplementedError()
+
+
 class CashReceiptProvider(CashReceiptProviderInterface):
-    cashbillService: ClassVar[CashbillService] = CashbillService(
-        settings.LinkID,
-        settings.SecretKey
-    )
-
+    cashbillService = CashbillService(settings.LinkID, settings.SecretKey)
     cashbillService.IsTest = settings.IsTest
     cashbillService.IPRestrictOnOff = settings.IPRestrictOnOff
     cashbillService.UseStaticIP = settings.UseStaticIP
     cashbillService.UseLocalTimeYN = settings.UseLocalTimeYN
 
-    async def check_member(self, business_number: str) -> dict:
+    def check_member(self, business_number: str) -> dict:
         try:
             corp_num = business_number
 
-            response = await asyncio.to_thread(
-                self.cashbillService.CheckIsMember ,
-                corp_num
-            )
+            response = self.cashbillService.checkIsMember(corp_num)
 
-            return  {
+            return {
                 "code": response.code,
                 "message": response.message,
             }
@@ -55,47 +50,38 @@ class CashReceiptProvider(CashReceiptProviderInterface):
                 detail=str(e)
             )
 
-
-    async def issue(self, order_number: str, amount: int, identity: str) -> dict:
+    def company_info(self, business_number: str) -> dict:
         try:
-            corp_num = settings.POPBILL_CORP_NUM
-            user_id = settings.POPBILL_USER_ID
-            memo = "현금영수증 즉시 발행"
+            corp_num = business_number
 
-            cashbill = Cashbill(
-                mgtKey=order_number,
-                tradeDT=data.trade_dt,               # yyyyMMddHHmmss
-                tradeType="승인거래",
-                taxationType="과세",
-                tradeOpt="일반",
-                tradeUsage=data.receipt_type,         # 소득공제용 / 지출증빙용
-                supplyCost=str(data.supply_cost),
-                tax=str(data.tax),
-                serviceFee="0",
-                totalAmount=str(data.total_amount),
-                franchiseCorpNum=corp_num,
-                franchiseCorpName=data.franchise_name,
-                franchiseCEOName=data.franchise_ceo,
-                franchiseAddr=data.franchise_addr,
-                franchiseTEL=data.franchise_tel,
-                identityNum=data.identity,            # 휴대폰 / 사업자번호
-                itemName=data.item_name,
-                orderNumber=order_number,
-                customerName=data.customer_name,
-                email=data.email,
-                hp=data.phone,
-                smssendYN=False,
+            response = self.cashbillService.getCorpInfo(corp_num)
+
+            return {
+                "ceo": response.ceoname,
+                "company_name": response.corpName,
+                "address": response.addr,
+            }
+
+        except PopbillException as e:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": e.code,
+                    "message": e.message,
+                }
             )
 
-            response = await asyncio.to_thread(
-                self.cashbillService.registIssue,
-                corp_num,
-                cashbill,
-                memo,
-                user_id
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=str(e)
             )
 
-            return  {
+    def join_member(self, data: CashBillUserRequest) -> dict:
+        try:
+            response = self.cashbillService.joinMember(data)
+
+            return {
                 "code": response.code,
                 "message": response.message,
             }

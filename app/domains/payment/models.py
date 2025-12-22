@@ -133,12 +133,14 @@ class PaymentCashReceipt(Base, TimestampMixin):
 
     id = Column(Integer, primary_key=True)
     payment_id = Column(Integer, ForeignKey("payment.id"), unique=True)
+    cashbill_user_id = Column(Integer, ForeignKey("cashbill_users.id"), nullable=False)
 
     receipt_no = Column(String(100))
     receipt_type = Column(String(20))  # 소득공제 / 지출증빙
     approval_no = Column(String(20))
 
     payment = relationship("Payment", back_populates="cash_receipt_detail")
+    cashbill_user = relationship("CashBillUser", back_populates="cash_receipt_detail")
 
 
 class PaymentLog(Base, TimestampMixin):
@@ -156,3 +158,15 @@ class PaymentLog(Base, TimestampMixin):
     status = Column(String(20))
 
     payment = relationship("Payment", back_populates="logs")
+
+
+class CashBillUser(Base, TimestampMixin):
+    __tablename__ = "cashbill_users"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    pobbill_user_id = Column(String(50), nullable=False)
+    password = Column(String(255), nullable=False)
+
+    user = relationship("User", back_populates="cashbill_user")
+    cash_receipt_detail = relationship("PaymentCashReceipt", back_populates="cashbill_user",uselist=False)

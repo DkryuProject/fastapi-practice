@@ -31,6 +31,7 @@ class User(Base, TimestampMixin):
     special_agree_yn = Column(Boolean, nullable=True)
     marketing_agree_yn = Column(Boolean, nullable=True)
     status = Column(Enum(UserStatusEnum), nullable=False, default=UserStatusEnum.SUSPENDED)
+    cashbill_id_yn = Column(Boolean, nullable=False, default=False)
 
     last_login_time = Column(DateTime, nullable=True)
     last_login_ip = Column(String(50), nullable=True)
@@ -43,6 +44,7 @@ class User(Base, TimestampMixin):
     bank_info = relationship("UserBankInfo", uselist=False, back_populates="user")
     documents = relationship("UserDocument", back_populates="user")
     payments = relationship("Payment", back_populates="user", cascade="all, delete-orphan")
+    cashbill_user = relationship("CashBillUser", uselist=False, back_populates="user")
 
 
 # -----------------------------

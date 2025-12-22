@@ -1,9 +1,30 @@
 from pydantic import BaseModel
 
 
+class CashBillUserRequest(BaseModel):
+    ID: str
+    Password: str
+    LinkID: str
+    CorpNum: str
+    CEOName: str
+    CorpName: str
+    Addr: str
+    BizType: str
+    BizClass: str
+    ContractName: str
+    ContractEmail: str
+    ContractTEL: str
+
+
+class CashBillUserCreate(BaseModel):
+    user_id: int
+    pobbill_user_id: str
+    password: str
+
+
 class CashReceiptCreate(BaseModel):
     amount: int
-    identity: str       # 휴대폰 / 사업자번호
+    identity: str
 
 
 class CashReceiptResult(BaseModel):

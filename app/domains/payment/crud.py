@@ -6,6 +6,7 @@ from app.domains.payment.models import (
     PaymentLinkRequest,
     PaymentManual,
     PaymentCashReceipt,
+    CashBillUser
 )
 from app.domains.payment.schemas import (
     PaymentUpdate, 
@@ -13,7 +14,8 @@ from app.domains.payment.schemas import (
     SMSPaymentResult, 
     SMSPaymentRequest,
     ManualPaymentRequestLog,
-    ManualPaymentResult
+    ManualPaymentResult,
+    CashBillUserRequest
 )
 from typing import Optional
 
@@ -137,6 +139,18 @@ class PaymentCRUD:
             receipt_no=payload.get("receipt_no"),
             receipt_type=payload.get("receipt_type"),
             approval_no=payload.get("approval_no"),
+        )
+        db.add(obj)
+        db.commit()
+        db.refresh(obj)
+        return obj
+
+    @staticmethod
+    def save_cashbill_user(db: Session, user_id: int, payload: CashBillUserRequest) -> CashBillUser:
+        obj = CashBillUser(
+            user_id=user_id,
+            pobbill_user_id=payload.ID,
+            password=payload.Password,
         )
         db.add(obj)
         db.commit()
