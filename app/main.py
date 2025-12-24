@@ -21,6 +21,7 @@ from app.core.exception_handler import (
 )
 from app.core.exceptions import AppException
 from fastapi.exceptions import HTTPException, RequestValidationError
+from fastapi.templating import Jinja2Templates
 
 setup_logging()
 logger = logging.getLogger("app")
@@ -37,6 +38,8 @@ app = FastAPI(
         "deepLinking": True
     }
 )
+
+templates = Jinja2Templates(directory="app/templates")
 
 
 @app.on_event("startup")

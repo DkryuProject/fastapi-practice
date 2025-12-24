@@ -1,5 +1,10 @@
+import uuid
+import secrets
+
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from app.domains.payment.crud import PaymentCRUD
+from app.domains.payment.models import PaymentLinkCreate
 from app.domains.payment.schemas import (
     PaymentCreate, 
     PaymentUpdate,
@@ -7,13 +12,25 @@ from app.domains.payment.schemas import (
     SMSPaymentRequest, 
     SMSPaymentResult,
     ManualPaymentRequestLog,
-    ManualPaymentResult
+    ManualPaymentResult,
+    LinkPaymentCreateRequest,
 )
+from app.domains.view.schemas import PaymentViewSchema
 from app.domains.payment.services.state_machine import PaymentStateMachine
 from datetime import datetime
+import logging
+logger = logging.getLogger(__name__)
 
 
 class PaymentService:
+    @staticmethod
+    def generate_order_number(prefix: str = "aisystem") -> str:
+        return f"{prefix}_{uuid.uuid4().hex[:12]}"
+
+    @staticmethod
+    def generate_access_token():
+        return secrets.token_urlsafe(32)
+
     @staticmethod
     def create_payment(db: Session, payload: PaymentCreate):
         return PaymentCRUD.create_payment(db, payload)
@@ -46,8 +63,10 @@ class PaymentService:
         return PaymentCRUD.save_sms_detail(db, payment_id, payload, result)
 
     @staticmethod
-    def save_link_detail(db: Session, payment_id: int, payload: dict):
-        return PaymentCRUD.save_link_detail(db, payment_id, payload)
+    def save_link_create(db: Session, payment_id, data: LinkPaymentCreateRequest):
+        token = PaymentService.generate_access_token()
+        url = f"http://localhost:8000/request-view/{payment_id}"
+        return PaymentCRUD.save_link_create(db, payment_id, url, token, data)
 
     @staticmethod
     def save_manual_detail(db: Session, payment_id: int, request: ManualPaymentRequestLog, result: ManualPaymentResult):
@@ -66,8 +85,77 @@ class PaymentService:
         db.refresh(payment)
 
         return payment
-    
+
     @staticmethod
-    def generate_order_number(prefix: str = "aisystem", seq: int = 1) -> str:
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        return f"{prefix}_{timestamp}_{seq:03d}"
+    def create_link_payment(db: Session, data: LinkPaymentCreateRequest, user) -> dict:
+        try:
+            order_number = PaymentService.generate_order_number()
+
+            payment_payload = PaymentCreate(
+                user_id=user.id,
+                order_number=order_number,
+                type="link",
+                amount=data.amount,
+                interface_status="SUCCESS",
+                status="create",
+            )
+
+            payment = PaymentService.create_payment(db, payment_payload)
+
+            result = PaymentService.save_link_create(db, payment.id, data)
+
+            db.commit()
+
+            return {
+                "payment_id": payment.id,
+                "url": result.url
+            }
+
+        except Exception:
+            db.rollback()
+            logger.exception("링크결제 요청 실패")
+            raise
+
+    @staticmethod
+    def request_link_payment(db: Session, payment_id: int, data: dict, cert_page_url: str):
+        try:
+            result = PaymentCRUD.save_link_request(db, payment_id, data, cert_page_url)
+
+            return result
+
+        except Exception:
+            logger.exception("링크 결제 요청 저장 실패")
+            raise
+
+    @staticmethod
+    def result_link_payment(db: Session, body: dict):
+        try:
+            result = PaymentCRUD.save_link_result(db, payment_id, body)
+
+            return result
+
+        except Exception:
+            logger.exception("링크 결제 요청 저장 실패")
+            raise
+
+    @staticmethod
+    def get_payment_view_by_token(db: Session, token: str) -> PaymentViewSchema:
+        link = PaymentCRUD.get_payment_by_link_token(db, token)
+
+        if not link:
+            raise HTTPException(status_code=404, detail="잘못된 결제 링크")
+
+        payment = link.payment
+
+        if not payment:
+            raise HTTPException(status_code=404, detail="결제 정보 없음")
+
+        return PaymentViewSchema(
+            payment_id=payment.id,
+            order_number=payment.order_number,
+            amount=payment.amount,
+            product_name=link.product_name,
+            purchase_name=link.purchase_name,
+            phone=link.phone,
+            token=link.token,
+        )

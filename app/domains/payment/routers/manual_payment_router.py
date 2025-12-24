@@ -10,16 +10,17 @@ from app.domains.user.models import User
 
 router = APIRouter()
 
+
 async def get_manual_provider() -> ManualProvider:
-    return ManualProvider() 
+    return ManualProvider()
 
 
 @router.post("/request", response_model=PaymentResponse)
 async def approve_card_payment(
-    data: ManualPaymentRequest, 
-    db: Session = Depends(get_db),
-    provider: ManualProvider = Depends(get_manual_provider),
-    current_user: User = Depends(get_current_user)
+        data: ManualPaymentRequest,
+        db: Session = Depends(get_db),
+        provider: ManualProvider = Depends(get_manual_provider),
+        current_user: User = Depends(get_current_user)
 ):
     service = ManualPaymentService(provider)
     payment = await service.approve_card(db, data, current_user)

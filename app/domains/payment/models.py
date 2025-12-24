@@ -20,10 +20,10 @@ class Payment(Base, TimestampMixin):
     sms_detail = relationship("PaymentSMS", back_populates="payment", uselist=False, cascade="all, delete-orphan")
     manual_card_detail = relationship("PaymentManual", back_populates="payment", uselist=False, cascade="all, delete-orphan")
     cash_receipt_detail = relationship("PaymentCashReceipt", back_populates="payment", uselist=False, cascade="all, delete-orphan")
-    link_request = relationship("PaymentLinkRequest", back_populates="payment", uselist=False, cascade="all, delete-orphan")
+    link_create = relationship("PaymentLinkCreate", back_populates="payment", uselist=False, cascade="all, delete-orphan")
     link_result = relationship("PaymentLinkResult", back_populates="payment", uselist=False, cascade="all, delete-orphan")
     link_cancel = relationship("PaymentLinkCancel", back_populates="payment", uselist=False, cascade="all, delete-orphan")
-    link_enroll = relationship("PaymentLinkEnroll", back_populates="payment", uselist=False, cascade="all, delete-orphan")
+    link_request = relationship("PaymentLinkRequest", back_populates="payment", uselist=False, cascade="all, delete-orphan")
     
     logs = relationship("PaymentLog", back_populates="payment", cascade="all, delete-orphan")
     user = relationship("User", back_populates="payments")
@@ -49,15 +49,41 @@ class PaymentSMS(Base, TimestampMixin):
     payment = relationship("Payment", back_populates="sms_detail")
 
 
+class PaymentLinkCreate(Base, TimestampMixin):
+    __tablename__ = "payment_link_create"
+
+    id = Column(Integer, primary_key=True)
+    payment_id = Column(Integer, ForeignKey("payment.id"), unique=True)
+
+    product_name = Column(String(100))
+    purchase_name = Column(String(100))
+    phone = Column(String(30))
+    payment_type = Column(String(20))
+    pay_method = Column(String(20))
+    url = Column(String(100))
+    token = Column(String(100), nullable=False)
+
+    payment = relationship("Payment", back_populates="link_create")
+
+
 class PaymentLinkRequest(Base, TimestampMixin):
     __tablename__ = "payment_link_request"
 
     id = Column(Integer, primary_key=True)
     payment_id = Column(Integer, ForeignKey("payment.id"), unique=True)
 
-    pg_tid = Column(String(100))
-    pay_url = Column(String(200))
-    expire_at = Column(DateTime)
+    shopTransactionId = Column(String(100))
+    shopReqDate = Column(String(100))
+    vanTid = Column(String(100))
+    shopOrderNo = Column(String(100))
+    amount = Column(Integer)
+    tax = Column(Integer)
+    productNm = Column(String(100))
+    mallNm = Column(String(100))
+    bussNo = Column(String(100))
+    cardCode = Column(String(100))
+    installment = Column(String(100))
+    clientOs = Column(String(100))
 
     payment = relationship("Payment", back_populates="link_request")
 
@@ -68,9 +94,20 @@ class PaymentLinkResult(Base, TimestampMixin):
     id = Column(Integer, primary_key=True)
     payment_id = Column(Integer, ForeignKey("payment.id"), unique=True)
 
-    pg_tid = Column(String(100))
-    pay_url = Column(String(200))
-    expire_at = Column(DateTime)
+    res_cd = Column(String(10))
+    res_msg = Column(String(100))
+    transaction_date = Column(String(20))
+    pay_method_type_code = Column(String(10))
+    van_serial = Column(String(100))
+    auth_no = Column(String(100))
+    issuer_code = Column(String(20))
+    acquirer_code = Column(String(20))
+    installment_month = Column(String(20))
+    van_tid = Column(String(20))
+    amount = Column(Integer)
+    shop_transaction_id = Column(String(20))
+    shop_order_no = Column(String(20))
+    cert_controll_no = Column(String(20))
 
     payment = relationship("Payment", back_populates="link_result")
 
@@ -81,24 +118,17 @@ class PaymentLinkCancel(Base, TimestampMixin):
     id = Column(Integer, primary_key=True)
     payment_id = Column(Integer, ForeignKey("payment.id"), unique=True)
 
-    pg_tid = Column(String(100))
-    pay_url = Column(String(200))
-    expire_at = Column(DateTime)
+    res_cd = Column(String(10))
+    res_msg = Column(String(100))
+    shop_transaction_id = Column(String(20))
+    van_tid = Column(String(20))
+    van_serial = Column(String(100))
+    cert_controll_no = Column(String(20))
+    cncl_controll_no = Column(String(20))
+    amount = Column(Integer)
+    transaction_date = Column(String(20))
 
     payment = relationship("Payment", back_populates="link_cancel")
-
-
-class PaymentLinkEnroll(Base, TimestampMixin):
-    __tablename__ = "payment_link_enroll"
-
-    id = Column(Integer, primary_key=True)
-    payment_id = Column(Integer, ForeignKey("payment.id"), unique=True)
-
-    pg_tid = Column(String(100))
-    pay_url = Column(String(200))
-    expire_at = Column(DateTime)
-
-    payment = relationship("Payment", back_populates="link_enroll")
 
 
 class PaymentManual(Base, TimestampMixin):

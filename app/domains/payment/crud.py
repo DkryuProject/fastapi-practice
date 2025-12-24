@@ -1,9 +1,12 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from app.domains.payment.models import (
     Payment,
     PaymentLog,
     PaymentSMS,
+    PaymentLinkCreate,
     PaymentLinkRequest,
+    PaymentLinkResult,
+    PaymentLinkCancel,
     PaymentManual,
     PaymentCashReceipt,
     CashBillUser
@@ -15,7 +18,8 @@ from app.domains.payment.schemas import (
     SMSPaymentRequest,
     ManualPaymentRequestLog,
     ManualPaymentResult,
-    CashBillUserRequest
+    CashBillUserRequest,
+    LinkPaymentCreateRequest
 )
 from typing import Optional
 
@@ -71,7 +75,6 @@ class PaymentCRUD:
         db.refresh(obj)
         return obj
 
-    # ----- detail save helpers -----
     @staticmethod
     def save_sms_detail(db: Session, payment_id: int, payload: SMSPaymentRequest, result: SMSPaymentResult) -> PaymentSMS:
         obj = PaymentSMS(
@@ -93,17 +96,75 @@ class PaymentCRUD:
         return obj
 
     @staticmethod
-    def save_link_detail(db: Session, payment_id: int, payload: dict) -> PaymentLinkRequest:
-        obj = PaymentLinkRequest(
+    def save_link_create(db: Session, payment_id: int, url: str, token: str, payload: LinkPaymentCreateRequest) -> PaymentLinkCreate:
+        obj = PaymentLinkCreate(
             payment_id=payment_id,
-            pg_tid=payload.get("tid") or payload.get("pg_tid"),
-            pay_url=payload.get("pay_url"),
-            expire_at=payload.get("expire_at"),
+            product_name=payload.product_name,
+            purchase_name=payload.purchase_name,
+            phone=payload.phone,
+            payment_type=payload.payment_type,
+            pay_method=payload.pay_method,
+            url=url,
+            token=token,
         )
         db.add(obj)
         db.commit()
         db.refresh(obj)
         return obj
+
+    @staticmethod
+    def save_link_request(db: Session, payment_id: int, url: str, token: str, payload: LinkPaymentCreateRequest) -> PaymentLinkRequest:
+        obj = PaymentLinkRequest(
+            payment_id=payment_id
+        )
+        db.add(obj)
+        db.commit()
+        db.refresh(obj)
+        return obj
+
+    @staticmethod
+    def save_link_result(db, payment_id: int, body: dict) -> PaymentLinkRequest:
+        result = PaymentLinkResult(
+            payment_id=payment_id,
+            res_cd=body["resCd"],
+            res_msg=body["resMsg"],
+            transaction_date=body["transactionDate"],
+            pay_method_type_code=body["paymentInfo"]["payMethodType"],
+            van_serial=body["paymentInfo"]["vanSerial"],
+            auth_no=body["paymentInfo"]["authNo"],
+            issuer_code=body["paymentInfo"]["cardInfo"]["issuerCode"],
+            acquirer_code=body["paymentInfo"]["cardInfo"]["acquirerCode"],
+            installment_month=body["paymentInfo"]["cardInfo"]["installmentMonth"],
+            van_tid=body["vanTid"],
+            amount=body["amount"],
+            shop_transaction_id=body["shopTransactionId"],
+            shop_order_no=body["shopOrderNo"],
+            cert_controll_no=body["controlNo"],
+        )
+
+        db.add(result)
+        db.commit()
+        db.refresh(result)
+        return result
+
+    @staticmethod
+    def save_link_payment_cancel(db, body: dict, result) -> PaymentLinkCancel:
+        cancel = PaymentLinkCancel(
+            res_cd=body["resCd"],
+            res_msg=body["resMsg"],
+            shop_transaction_id=body["shopTransactionId"],
+            van_tid=body["vanTid"],
+            van_serial=body["vanSerial"],
+            cert_controll_no=result.cert_controll_no,
+            cncl_controll_no=body["cancelControlNo"],
+            amount=body["amount"],
+            transaction_date=body["transactionDate"],
+        )
+
+        db.add(cancel)
+        db.commit()
+        db.refresh(cancel)
+        return cancel
 
     @staticmethod
     def save_manual_detail(db: Session, payment_id: int, request: ManualPaymentRequestLog, result: ManualPaymentResult) -> PaymentManual:
@@ -156,3 +217,12 @@ class PaymentCRUD:
         db.commit()
         db.refresh(obj)
         return obj
+
+    @staticmethod
+    def get_payment_by_link_token(db: Session, token: str):
+        return (
+            db.query(PaymentLinkCreate)
+            .options(joinedload(PaymentLinkCreate.payment))
+            .filter(PaymentLinkCreate.token == token)
+            .first()
+        )

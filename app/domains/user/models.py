@@ -102,6 +102,8 @@ class UserBusiness(Base, TimestampMixin):
     address_detail = Column(String(255))
     zipcode = Column(String(20))
 
+    tid = Column(String(20))
+
     user = relationship("User", back_populates="business")
 
 

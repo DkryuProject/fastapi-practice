@@ -8,6 +8,7 @@ class PaymentBase(BaseModel):
     order_number: str
     type: str
     amount: int
+    interface_status: Optional[str] = None
     status: Optional[str] = None
 
 

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>결제 금액 정보</title>
+
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            /* Changed to flex-start for mobile, as content might be long */
+            align-items: flex-start;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px 0; /* Add some vertical padding for content */
+            box-sizing: border-box; /* Include padding in element's total width and height */
+            font-family: sans-serif; /* Ensure consistent font */
+        }
+
+        .outer-content-wrapper {
+            /* This will be the main container for your entire content block (like the screenshot) */
+            display: flex;
+            flex-direction: column;
+            width: 95%; /* Adjust percentage for responsiveness */
+            max-width: 500px; /* Max width for larger screens */
+            background-color: #fff; /* White background for the whole content block */
+            border-radius: 8px; /* Slightly rounded corners */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+            overflow: hidden; /* Ensures content doesn't bleed outside rounded corners */
+        }
+
+        /* Consider if you still need 'container' for aspect ratio or if it's for a different image */
+        /* .container { ... } */
+
+        /* Section Titles (상품명, 결제 금액 정보, 판매 상점 정보, 공급자 정보) */
+        .section-title {
+            /* Using the colors from your screenshot for the header bars */
+            background-color: #8cadda; /* This is the bluish-grey from your screenshot for the first title */
+            color: white; /* Text color for titles */
+            padding: 12px 15px; /* Ample padding */
+            font-weight: bold;
+            font-size: 1.1em;
+            border-bottom: 1px solid rgba(255,255,255,0.2); /* Subtle separator for titles */
+            /* No margin-bottom here, as content rows will follow directly */
+        }
+
+        /* Different background colors for section titles based on screenshot */
+        .section-title.product-info {
+            background-color: #8cadda; /* Blue-grey */
+        }
+
+        .section-title.payment-info {
+            background-color: #9cdade; /* Light blue */
+        }
+
+        .section-title.store-info {
+            background-color: #e09d5c; /* Orange */
+        }
+
+        .section-title.supplier-info {
+            background-color: #928cbd; /* Purple */
+        }
+
+
+        /* Rows for label-value pairs (상품, 거래(취소)일, 승인번호 etc.) */
+        .info-row {
+            display: flex;
+            /* Changed flex-wrap to wrap to allow label/value to stack on small screens */
+            flex-wrap: wrap;
+            border-bottom: 1px solid #e0e0e0; /* Light gray border for rows */
+            padding: 0; /* No padding on the row itself, add to label/value */
+        }
+
+        .info-row:last-of-type {
+            border-bottom: none; /* No border for the last row in a section */
+        }
+
+        .info-label {
+            flex-basis: 100px; /* Give a fixed minimum width for labels */
+            flex-shrink: 0; /* Prevent label from shrinking */
+            padding: 10px 15px; /* Padding inside label */
+            background-color: #e6f2f7; /* Very light blue background, similar to screenshot */
+            color: #555;
+            font-weight: bold;
+            box-sizing: border-box; /* Include padding in flex-basis width */
+            font-size: 0.9em; /* Slightly smaller font for details */
+            /* For smaller screens, if label wraps, center it or align left */
+            text-align: left;
+        }
+
+        .info-value {
+            flex-grow: 1; /* Allow value to take remaining space */
+            padding: 10px 15px; /* Padding inside value */
+            background-color: #f6fbfd; /* Lighter background for value, similar to screenshot */
+            color: #333;
+            /* CRITICAL: Allow long text to wrap */
+            word-break: break-word; /* Breaks words at any point to prevent overflow */
+            overflow-wrap: break-word; /* Modern equivalent */
+            min-width: 0; /* Allows flex item to shrink below content size if necessary */
+            box-sizing: border-box;
+            font-size: 0.9em;
+        }
+
+        /* Special handling for two-column rows like '거래(취소)일 승인번호' */
+        /* Assuming this is a single .info-row with multiple labels and values inside */
+        .info-row.two-column-layout {
+            flex-wrap: wrap; /* Ensure it wraps on small screens */
+        }
+
+        .info-row.two-column-layout .info-label,
+        .info-row.two-column-layout .info-value {
+            flex-basis: 50%; /* Each takes 50% for two columns */
+            padding: 10px 15px; /* Consistent padding */
+            box-sizing: border-box;
+        }
+
+        /* Ensure alternating backgrounds for the split row if needed */
+        .info-row.two-column-layout .info-label:nth-child(even),
+        .info-row.two-column-layout .info-value:nth-child(even) {
+            background-color: #f0f8ff; /* Example: slightly different background for even items */
+        }
+
+        /* Media Queries for better responsiveness */
+        @media (max-width: 600px) {
+            /* On smaller screens, adjust section titles padding */
+            .section-title {
+                padding: 10px 12px;
+                font-size: 1em;
+            }
+
+            /* For info rows, stack label and value vertically on very small screens */
+            .info-row {
+                flex-direction: column; /* Stack label and value */
+                /* No border-bottom here if the label/value already have it */
+                /* If you want internal borders, consider adding to label/value only */
+            }
+
+            .info-label {
+                flex-basis: auto; /* Remove fixed basis when stacked */
+                width: 100%; /* Take full width when stacked */
+                border-bottom: 1px solid #e0e0e0; /* Add border to label when stacked */
+                padding-bottom: 8px; /* Adjust padding when stacked */
+            }
+
+            .info-value {
+                width: 100%; /* Take full width when stacked */
+                padding-top: 8px; /* Adjust padding when stacked */
+            }
+
+            /* Special handling for two-column layout on very small screens */
+            .info-row.two-column-layout .info-label,
+            .info-row.two-column-layout .info-value {
+                flex-basis: 100%; /* Stack these as well */
+            }
+
+            .info-row.two-column-layout .info-label {
+                border-bottom: 1px solid #e0e0e0; /* Border for stacked label */
+            }
+        }
+
+        @media (max-width: 400px) {
+            /* Further adjustments for very small phones */
+            .outer-content-wrapper {
+                width: 100%; /* Full width on smallest screens */
+                border-radius: 0; /* Remove border-radius on smallest screens for edge-to-edge */
+            }
+            body {
+                padding: 0; /* Remove body padding on smallest screens */
+            }
+        }
+
+        .bottom-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px; /* 버튼 사이 간격 */
+            align-items: stretch; /* 자식 요소들을 부모 너비에 맞춰 늘림 */
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px; /* 입력 필드와 버튼 사이 간격 */
+        }
+
+        .phone-number {
+            flex-grow: 1; /* 입력 필드가 남은 공간을 모두 차지하도록 함 */
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            color: #333;
+            background-color: #f9f9f9;
+        }
+
+        .address-button {
+            padding: 12px 15px;
+            background-color: #ffeb3b; /* 이미지의 노란색 */
+            color: #333;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .send-receipt-button {
+            background-color: #ffeb3b; /* 이미지의 노란색 */
+            color: #333;
+            border: none;
+            border-radius: 5px;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        /* (선택 사항) 호버 시 스타일 변경 */
+        .address-button:hover,
+        .send-receipt-button:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+
+<body>
+<div class="outer-content-wrapper">
+    <div id="capture">
+
+        <div class="section-title product-info">상품명</div>
+        <div class="info-section-body">
+            <div class="info-row">
+                <span class="info-label">상품</span>
+                <span class="info-value">{{ product_name }}</span>
+            </div>
+
+            <div class="info-row two-column-layout">
+                <span class="info-label">거래(취소)일</span>
+                <span class="info-value">
+                    {% if cancel_id %}
+                        {{ cancel_date }}
+                    {% else %}
+                        {{ pay_date }}
+                    {% endif %}
+                </span>
+
+                <span class="info-label">승인번호</span>
+                <span class="info-value">{{ shop_transaction_id }}</span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">거래 유형</span>
+                <span class="info-value">
+                    {% if payment_type == 'sg' %}
+                        일반결제
+                    {% else %}
+                        정기결제
+                    {% endif %}
+                </span>
+
+                <span class="info-label">할부 여부</span>
+                <span class="info-value">
+                    {% if installment_month == 0 %}
+                        일시불
+                    {% else %}
+                        {{ installment_month }}개월
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+
+        <div class="section-title payment-info">결제 금액 정보</div>
+        <div class="info-section-body">
+            <div class="info-row">
+                <span class="info-label">승인 금액</span>
+                <span class="info-value">{{ amount }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">합계</span>
+                <span class="info-value">{{ amount }}</span>
+            </div>
+        </div>
+
+        <div class="section-title store-info">판매 상점 정보</div>
+        <div class="info-section-body">
+            <div class="info-row">
+                <span class="info-label">판매자</span>
+                <span class="info-value">{{ business_name }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">판매자 사업자번호</span>
+                <span class="info-value">{{ business_number }}</span>
+            </div>
+        </div>
+
+        <div class="section-title supplier-info">공급자 정보</div>
+        <div class="info-section-body">
+            <div class="info-row">
+                <span class="info-label">공급자 상호</span>
+                <span class="info-value">{{ business_name }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">대표자명</span>
+                <span class="info-value">{{ user_name }}</span>
+            </div>
+            <div class="info-row two-column-layout">
+                <span class="info-label">사업자 번호</span>
+                <span class="info-value">{{ business_number }}</span>
+                <span class="info-label">전화번호</span>
+                <span class="info-value">{{ user_phone }}</span>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="bottom-container">
+        <div class="input-group">
+            <input
+                    type="text"
+                    class="phone-number"
+                    id="phone"
+                    value="{{ purchase_phone }}"
+            />
+        </div>
+        <button class="send-receipt-button">영수증 보내기</button>
+    </div>
+</div>
+
+<script>
+    const shopTransactionId = "{{ shop_transaction_id }}";
+
+    $(function () {
+        $(".send-receipt-button").on("click", function () {
+            if (confirm("발송하시겠습니까?")) {
+                html2canvas(document.querySelector("#capture")).then(canvas => {
+                    sendReceipt(canvas.toDataURL("image/png"));
+                });
+            }
+        });
+
+        function sendReceipt(image) {
+            let formData = new FormData();
+            formData.append("image", image);
+            formData.append("shop_transaction_id", shopTransactionId);
+            formData.append("phone", $("#phone").val());
+
+            $.ajax({
+                url: "/api/v1/payment/receipt",
+                method: "POST",
+                contentType: false,
+                processData: false,
+                data: formData,
+                success: function () {
+                    alert("영수증이 전송되었습니다.");
+                },
+                error: function () {
+                    alert("전송 실패");
+                }
+            });
+        }
+    });
+</script>
+
+</body>
+</html>

@@ -18,6 +18,7 @@ from .cash_receipt_schemas import (
     CashReceiptResult
 )
 from .payment_link_schemas import (
+    LinkPaymentCreateRequest,
     LinkPaymentCreate,
     LinkPaymentResult
 )
