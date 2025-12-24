@@ -1,17 +1,12 @@
 from sqlalchemy.orm import Session
 from app.domains.payment.schemas import (
-    PaymentCreate, PaymentLogCreate, CashBillUserRequest, CashBillUserCreate, CashReceiptCreate
+    PaymentCreate, PaymentLogCreate, CashBillUserRequest, CashReceiptCreate
 )
 from app.domains.payment.interfaces.cash_receipt_provider import CashReceiptProviderInterface
 from app.domains.payment.services import PaymentService
 from app.domains.user.models import User
-from app.domains.payment.crud import PaymentCRUD
 import logging
 logger = logging.getLogger(__name__)
-
-
-def create_cashbill_user(db: Session, user_id: int, data: CashBillUserRequest):
-    return PaymentCRUD.save_cashbill_user(db, user_id, data)
 
 
 class CashReceiptService:
@@ -36,7 +31,7 @@ class CashReceiptService:
             logger.exception("팝빌 회원 가입 결과: %s", result)
 
             if result.code == 1:
-                user = create_cashbill_user(db, user.id, data)
+                user = PaymentService.create_cash_receipt_user(db, user.id, data)
 
             db.commit()
             db.refresh(user)

@@ -14,6 +14,7 @@ from app.domains.payment.schemas import (
     ManualPaymentRequestLog,
     ManualPaymentResult,
     LinkPaymentCreateRequest,
+    CashBillUserRequest,
 )
 from app.domains.view.schemas import PaymentViewSchema
 from app.domains.payment.services.state_machine import PaymentStateMachine
@@ -71,6 +72,10 @@ class PaymentService:
     @staticmethod
     def save_manual_detail(db: Session, payment_id: int, request: ManualPaymentRequestLog, result: ManualPaymentResult):
         return PaymentCRUD.save_manual_detail(db, payment_id, request, result)
+
+    @staticmethod
+    def create_cash_receipt_user(db: Session, user_id: int, data: CashBillUserRequest):
+        return PaymentCRUD.save_cashbill_user(db, user_id, data)
 
     @staticmethod
     def save_cash_receipt_detail(db: Session, payment_id: int, payload: dict):

@@ -15,11 +15,10 @@ from .cash_receipt_schemas import (
     CashBillUserRequest,
     CashBillUserCreate,
     CashReceiptCreate,
-    CashReceiptResult
+    CashReceiptResult,
 )
 from .payment_link_schemas import (
     LinkPaymentCreateRequest,
-    LinkPaymentCreate,
     LinkPaymentResult
 )
 from .payment_sms_schemas import (
