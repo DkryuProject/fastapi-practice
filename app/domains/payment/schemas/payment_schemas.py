@@ -5,7 +5,7 @@ from datetime import datetime
 
 class PaymentBase(BaseModel):
     user_id: int
-    order_number: str
+    payment_number: str
     type: str
     amount: int
     interface_status: Optional[str] = None

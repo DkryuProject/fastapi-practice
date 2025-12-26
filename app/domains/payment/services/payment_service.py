@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 class PaymentService:
     @staticmethod
-    def generate_order_number(prefix: str = "aisystem") -> str:
+    def generate_payment_number(prefix: str = "aisystem") -> str:
         return f"{prefix}_{uuid.uuid4().hex[:12]}"
 
     @staticmethod
@@ -82,7 +82,7 @@ class PaymentService:
         return PaymentCRUD.save_cash_receipt_detail(db, payment_id, payload)
 
     @staticmethod
-    def update_status(db, payment, new_status: str):
+    def update_interface_status(db, payment, new_status: str):
         PaymentStateMachine.assert_transition(payment.interface_status, new_status)
 
         payment.interface_status = new_status        

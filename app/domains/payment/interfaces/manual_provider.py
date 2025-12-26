@@ -4,6 +4,7 @@ from app.core.config import settings
 from abc import ABC, abstractmethod
 from app.utils.retry import retry_request
 from app.domains.payment.schemas import ManualPaymentResult, ManualPaymentRequest
+from sqlalchemy.orm import Session
 
 
 def make_hash(mid: str, amount: int) -> str:
@@ -13,14 +14,14 @@ def make_hash(mid: str, amount: int) -> str:
 
 class ManualProviderInterface(ABC):
     @abstractmethod
-    async def approve(self, order_number: str, data: ManualPaymentRequest) -> ManualPaymentResult:
+    async def approve(db: Session, order_number: str, data: ManualPaymentRequest) -> ManualPaymentResult:
         raise NotImplementedError()
 
 
 class ManualProvider(ManualProviderInterface):
     BASE_URL = settings.manual_api_url
 
-    async def approve(self, order_number: str, data: ManualPaymentRequest) -> ManualPaymentResult:
+    async def approve(db: Session, order_number: str, data: ManualPaymentRequest) -> ManualPaymentResult:
         expire_yymm = f"{int(data.expire_year) % 100:02d}{int(data.expire_month):02d}"
 
         payload = {

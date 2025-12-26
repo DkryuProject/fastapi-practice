@@ -4,6 +4,9 @@ from app.domains.payment.interfaces.manual_provider import ManualProviderInterfa
 from app.domains.payment.services.payment_service import PaymentService
 from app.domains.user.models import User
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 def mask_card_number(card_number: str) -> dict:
     if not card_number or len(card_number) < 10:
@@ -26,23 +29,24 @@ class ManualPaymentService:
     def __init__(self, provider: ManualProviderInterface):
         self.provider = provider
 
-    async def approve_card(self, db: Session, data: ManualPaymentRequest, user: User):
-        order_number = PaymentService.generate_order_number()
+    async def approve(self, db: Session, data: ManualPaymentRequest, user: User):
+        payment_number = PaymentService.generate_payment_number()
 
         payment_payload = PaymentCreate(
             user_id=user.id,
-            order_number=order_number,
+            payment_number=payment_number,
             type="manual",
             amount=data.amount,
+            status="request"
         )
     
         payment = PaymentService.create_payment(db, payment_payload)
 
-        PaymentService.update_status(db, payment, "PENDING")
+        PaymentService.update_interface_status(db, payment, "PENDING")
 
         card_info = mask_card_number(data.card_number)
         request_log = ManualPaymentRequestLog(
-            order_number=order_number,
+            order_number=payment_number,
             amount=data.amount,
             quota=data.quota,
             buyer_name=data.buyer_name,
@@ -53,12 +57,12 @@ class ManualPaymentService:
         )
 
         try:
-            result = await self.provider.approve(order_number, data)
+            result = await self.provider.approve(db, payment_number, data)
 
-            PaymentService.update_status(db, payment, "SUCCESS")
+            PaymentService.update_interface_status(db, payment, "SUCCESS")
 
         except Exception as e:
-            PaymentService.update_status(db, payment, "ERROR")
+            PaymentService.update_interface_status(db, payment, "ERROR")
 
             PaymentService.write_log(
                 db, payment.id,

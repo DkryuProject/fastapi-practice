@@ -5,6 +5,7 @@ from app.domains.payment.schemas import (
 from app.domains.payment.interfaces.cash_receipt_provider import CashReceiptProviderInterface
 from app.domains.payment.services import PaymentService
 from app.domains.user.models import User
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -34,7 +35,6 @@ class CashReceiptService:
                 user = PaymentService.create_cash_receipt_user(db, user.id, data)
 
             db.commit()
-            db.refresh(user)
 
         except Exception as e:
             db.rollback()
@@ -45,13 +45,14 @@ class CashReceiptService:
 
     def issue_receipt(self, db: Session, data: CashReceiptCreate, user: User):
         
-        order_number = PaymentService.generate_order_number()
+        payment_number = PaymentService.generate_payment_number()
 
         payment_payload = PaymentCreate(
             user_id=user.id,
-            order_number=order_number,
-            type="cash",
+            payment_number=payment_number,
+            type="cash_receipt",
             amount=data.amount,
+            status="issue",
         )
 
         payment = PaymentService.create_payment(db, payment_payload)

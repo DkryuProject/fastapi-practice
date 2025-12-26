@@ -15,15 +15,30 @@ async def get_manual_provider() -> ManualProvider:
     return ManualProvider()
 
 
-@router.post("/request", response_model=PaymentResponse)
-async def approve_card_payment(
+@router.post("/approve", response_model=PaymentResponse, summary="수기 결제")
+async def approve(
         data: ManualPaymentRequest,
         db: Session = Depends(get_db),
         provider: ManualProvider = Depends(get_manual_provider),
         current_user: User = Depends(get_current_user)
 ):
     service = ManualPaymentService(provider)
-    payment = await service.approve_card(db, data, current_user)
+    payment = await service.approve(db, data, current_user)
+
+    if not payment:
+        raise HTTPException(status_code=500, detail="approval failed")
+    return payment
+
+
+@router.post("/cancel", response_model=PaymentResponse, summary="수기 결제 취소")
+async def approve(
+        data: ManualPaymentRequest,
+        db: Session = Depends(get_db),
+        provider: ManualProvider = Depends(get_manual_provider),
+        current_user: User = Depends(get_current_user)
+):
+    service = ManualPaymentService(provider)
+    payment = await service.approve(db, data, current_user)
 
     if not payment:
         raise HTTPException(status_code=500, detail="approval failed")
