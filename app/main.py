@@ -13,6 +13,7 @@ from app.scheduler import start_scheduler
 from app.domains.user.router import router as user_router
 from app.domains.auth.router import router as auth_router
 from app.domains.payment.routers import router as payment_router
+from app.domains.view.router import router as view_router
 from app.core.exception_handler import (
     app_exception_handler,
     unhandled_exception_handler,
@@ -21,7 +22,7 @@ from app.core.exception_handler import (
 )
 from app.core.exceptions import AppException
 from fastapi.exceptions import HTTPException, RequestValidationError
-from fastapi.templating import Jinja2Templates
+from app.core.templates import templates
 
 setup_logging()
 logger = logging.getLogger("app")
@@ -38,8 +39,6 @@ app = FastAPI(
         "deepLinking": True
     }
 )
-
-templates = Jinja2Templates(directory="app/templates")
 
 
 @app.on_event("startup")
@@ -148,7 +147,7 @@ app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.include_router(user_router, prefix="/api/v1/user", tags=["User"])
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["Auth"])
 app.include_router(payment_router, prefix="/api/v1/payment", tags=["Payment"])
-
+app.include_router(view_router, prefix="/api/v1/view", tags=["View"])
 
 # OpenAPI 커스터마이징
 def custom_openapi():

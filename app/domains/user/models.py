@@ -7,7 +7,7 @@ from datetime import datetime
 
 from app.core.database import Base
 from app.core.models_base import TimestampMixin
-
+from app.domains.common.models import SMSSendLog, KakaoSendLog
 
 class UserStatusEnum(str, enum.Enum):
     ACTIVE = "ACTIVE"
@@ -37,15 +37,16 @@ class User(Base, TimestampMixin):
     last_login_ip = Column(String(50), nullable=True)
 
     refresh_tokens = relationship("RefreshToken", back_populates="user")
-    profile = relationship("UserProfile", uselist=False, back_populates="user")
-    business = relationship("UserBusiness", uselist=False, back_populates="user")
-    push_settings = relationship("UserPushSetting", uselist=False, back_populates="user")
-    push_tokens = relationship("UserPushToken", back_populates="user")
-    bank_info = relationship("UserBankInfo", uselist=False, back_populates="user")
-    documents = relationship("UserDocument", back_populates="user")
+    profile = relationship("UserProfile", uselist=False, back_populates="user", cascade="all, delete-orphan")
+    business = relationship("UserBusiness", uselist=False, back_populates="user", cascade="all, delete-orphan")
+    push_settings = relationship("UserPushSetting", uselist=False, back_populates="user", cascade="all, delete-orphan")
+    push_tokens = relationship("UserPushToken", back_populates="user", cascade="all, delete-orphan")
+    bank_info = relationship("UserBankInfo", uselist=False, back_populates="user", cascade="all, delete-orphan")
+    documents = relationship("UserDocument", back_populates="user", cascade="all, delete-orphan")
     payments = relationship("Payment", back_populates="user", cascade="all, delete-orphan")
-    cashbill_user = relationship("CashBillUser", uselist=False, back_populates="user")
-
+    cashbill_user = relationship("CashBillUser", uselist=False, back_populates="user", cascade="all, delete-orphan")
+    sms_send_logs = relationship("SMSSendLog", back_populates="user", cascade="all, delete-orphan")
+    kakao_send_logs = relationship("KakaoSendLog", back_populates="user", cascade="all, delete-orphan")
 
 # -----------------------------
 # Refresh Token

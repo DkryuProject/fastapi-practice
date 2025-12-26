@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.main import templates
+from app.core.templates import templates
 from app.domains.payment.services.payment_service import PaymentService
 
 router = APIRouter()

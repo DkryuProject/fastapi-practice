@@ -66,7 +66,7 @@ class PaymentService:
     @staticmethod
     def save_link_create(db: Session, payment_id, data: LinkPaymentCreateRequest):
         token = PaymentService.generate_access_token()
-        url = f"http://localhost:8000/request-view/{payment_id}"
+        url = f"http://localhost:8000/api/v1/view/request-view/{token}"
         return PaymentCRUD.save_link_create(db, payment_id, url, token, data)
 
     @staticmethod
@@ -101,7 +101,6 @@ class PaymentService:
                 order_number=order_number,
                 type="link",
                 amount=data.amount,
-                interface_status="SUCCESS",
                 status="create",
             )
 

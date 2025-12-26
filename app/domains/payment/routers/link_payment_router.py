@@ -75,20 +75,21 @@ async def result_link_payment(
     return {"success": "success"}
 
 
-@router.post('/cancel')
-async def cancel_link_payment(
-        token: str,
-        payload: PaymentCancelRequest,
-        provider: LinkProvider = Depends(get_link_provider),
-        db: Session = Depends(get_db)
-):
-    service = LinkPaymentService(provider)
-    payment = await service.cancel_link_payment(db, payload.shop_transaction_id)
 
-    if not payment:
-        raise HTTPException(status_code=500, detail="link request failed")
+#@router.post('/cancel')
+#async def cancel_link_payment(
+#        token: str,
+#        payload: PaymentCancelRequest,
+#        provider: LinkProvider = Depends(get_link_provider),
+#        db: Session = Depends(get_db)
+#):
+#    service = LinkPaymentService(provider)
+#    payment = await service.cancel_link_payment(db, payload.shop_transaction_id)
 
-    return {"success": "success"}
+#    if not payment:
+#        raise HTTPException(status_code=500, detail="link request failed")
+
+#    return {"success": "success"}
 
 
 @router.post("/api/payment/receipt")
