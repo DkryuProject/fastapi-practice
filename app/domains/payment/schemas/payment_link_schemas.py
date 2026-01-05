@@ -10,10 +10,9 @@ class LinkPaymentCreateRequest(BaseModel):
     pay_method: str
 
 
-class LinkPaymentRequestResponse(BaseModel):
-    pay_url: str
-    tid: str
-    status: str
+class LinkPaymentCancelRequest(BaseModel):
+    id: int
+    cancel_reason: str
 
 
 class LinkPaymentResult(BaseModel):

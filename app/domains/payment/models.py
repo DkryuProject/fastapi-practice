@@ -87,10 +87,10 @@ class PaymentLinkRequest(Base, TimestampMixin):
     buyer_neme = Column(String(30))
     buyer_tel = Column(String(12))
     buyer_email = Column(String(50))
-    buyer_address= Column(String(100))
-    buyer_post_number= Column(String(6))
-    user_ip= Column(String(100))
-    req_reserved= Column(String(200))
+    buyer_address = Column(String(100))
+    buyer_post_number = Column(String(6))
+    user_ip = Column(String(100))
+    req_reserved = Column(String(200))
 
     payment = relationship("Payment", back_populates="link_request")
 

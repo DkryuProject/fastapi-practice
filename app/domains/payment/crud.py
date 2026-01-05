@@ -113,38 +113,40 @@ class PaymentCRUD:
         return obj
 
     @staticmethod
-    def save_link_request(db: Session, payment_id: int, url: str, token: str, payload: LinkPaymentCreateRequest) -> PaymentLinkRequest:
+    def save_link_request(db: Session, payment_id: int, data: dict) -> PaymentLinkRequest:
         obj = PaymentLinkRequest(
             payment_id=payment_id
         )
         db.add(obj)
         db.commit()
-        db.refresh(obj)
+
         return obj
 
     @staticmethod
-    def save_link_result(db, payment_id: int, body: dict) -> PaymentLinkRequest:
+    def save_link_result(db, payment_id: int, form) -> PaymentLinkResult:
         result = PaymentLinkResult(
             payment_id=payment_id,
-            res_cd=body["resCd"],
-            res_msg=body["resMsg"],
-            transaction_date=body["transactionDate"],
-            pay_method_type_code=body["paymentInfo"]["payMethodType"],
-            van_serial=body["paymentInfo"]["vanSerial"],
-            auth_no=body["paymentInfo"]["authNo"],
-            issuer_code=body["paymentInfo"]["cardInfo"]["issuerCode"],
-            acquirer_code=body["paymentInfo"]["cardInfo"]["acquirerCode"],
-            installment_month=body["paymentInfo"]["cardInfo"]["installmentMonth"],
-            van_tid=body["vanTid"],
-            amount=body["amount"],
-            shop_transaction_id=body["shopTransactionId"],
-            shop_order_no=body["shopOrderNo"],
-            cert_controll_no=body["controlNo"],
+            result_code=form.get("resultCd"),
+            result_msg=form.get("resultMsg"),
+            cancel_yn=form.get("cancelYN"),
+            app_no=form.get("appNo"),
+            amt=form.get("amt"),
+            card_no=form.get("cardNo"),
+            tid=form.get("tid"),
+            ord_nm=form.get("ordNm"),
+            ord_no=form.get("ordNo"),
+            pay_method=form.get("payMethod"),
+            fn_nm=form.get("fnNm"),
+            quota=form.get("quota"),
+            app_date=form.get("appDate"),
+            req_reserved=form.get("reqReserved"),
+            goods_name=form.get("goodsName"),
+            co_nm=form.get("coNm"),
         )
 
         db.add(result)
         db.commit()
-        db.refresh(result)
+
         return result
 
     @staticmethod
@@ -224,5 +226,13 @@ class PaymentCRUD:
             db.query(PaymentLinkCreate)
             .options(joinedload(PaymentLinkCreate.payment))
             .filter(PaymentLinkCreate.token == token)
+            .first()
+        )
+
+    @staticmethod
+    def get_link_payment_result_by_payment_id(db: Session, payment_id: int):
+        return (
+            db.query(PaymentLinkResult)
+            .filter(PaymentLinkResult.payment_id == payment_id)
             .first()
         )

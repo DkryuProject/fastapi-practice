@@ -2,244 +2,101 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>결제 요청</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.3.1.min.js"></script>
 
     <style>
-        body {
-            font-family: sans-serif;
-            background-color: #f8f8f8;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-        }
-
-        .container {
-            background-color: #fff;
-            border: 1px solid #ddd;
-            padding: 20px;
+        #mask {
+            position: absolute;
+            background-color: #000;
+            display: none;
             width: 100%;
-            max-width: 420px;
+            height: 100%;
+            z-index: 9000;
         }
-
-        .info .row {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
-        }
-
-        .label {
-            font-weight: bold;
-            color: #555;
-        }
-
-        .value {
-            color: #333;
-        }
-
-        .amount {
-            text-align: right;
-            padding: 20px 0;
-        }
-
-        .amount .value {
-            font-size: 2em;
-            font-weight: bold;
-            color: #007bff;
-        }
-
-        .installment-section,
-        .agreement-section,
-        .payment-methods,
-        .confirmation {
-            margin-top: 20px;
-        }
-
-        select {
+        .window {
+            display: none;
+            position: fixed;
             width: 100%;
-            padding: 10px;
-        }
-
-        .cards {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-        }
-
-        .card {
-            border: 1px solid #ddd;
-            padding: 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            background: #f9f9f9;
-        }
-
-        .card.is-active {
-            border: 2px solid red;
-        }
-
-        .pay-button {
-            width: 100%;
-            padding: 15px;
-            background-color: yellow;
-            border: none;
-            font-size: 1.1em;
-            cursor: pointer;
-        }
-
-        .img-size {
-            max-width: 60px;
-            max-height: 60px;
-        }
-
-        .required {
-            color: red;
-        }
-
-        .view-details {
-            margin-left: 10px;
-            color: #007bff;
-            cursor: pointer;
-            font-size: 0.9em;
+            height: 100%;
+            z-index: 10000;
         }
     </style>
 </head>
 
 <body>
-<div class="container">
-
-    <!-- 가맹점 / 상품 정보 -->
-    <section class="info">
-        <div class="row">
-            <span class="label">가맹점명</span>
-            <span class="value">{{ business_name }}</span>
-        </div>
-        <div class="row">
-            <span class="label">상품명</span>
-            <span class="value">{{ product_name }}</span>
-        </div>
-
-        {% if memo %}
-        <div class="row">
-            <span class="label">메모</span>
-            <span class="value">{{ memo }}</span>
-        </div>
-        {% endif %}
-    </section>
-
-    <!-- 결제 금액 -->
-    <section class="amount">
-        <span class="label">결제금액</span>
-        <span class="value">{{ "{:,}".format(purchase_price) }}</span>
-        <span>원</span>
-    </section>
-
-    <!-- 할부 -->
-    <div class="installment-section">
-        <label class="label">할부 기간</label>
-        <select id="installment">
-            <option value="00">일시불</option>
-            <option value="03">3개월</option>
-            <option value="06">6개월</option>
-            <option value="12">12개월</option>
-        </select>
-    </div>
-
-    <!-- 약관 -->
-    <div class="agreement-section">
-        <input type="checkbox" id="agreement">
-        <label>
-            <span class="required">필수</span> 개인정보의 제3자 제공 동의
-        </label>
-        <span class="view-details" onclick="toggleSection('infoSection')">보기</span>
-    </div>
-
-    <div id="infoSection" style="display:none; font-size: 0.9em; margin-top: 10px;">
-        <p>
-            제공자: 카드사 / 제공받는자: 한국정보통신㈜<br>
-            이용 목적: 결제대행 및 고객상담<br>
-            보유기간: 결제일로부터 3개월
-        </p>
-    </div>
-
-    <!-- 카드 선택 -->
-    <section class="payment-methods">
-        <h3>결제 수단 선택</h3>
-        <div class="cards">
-            {% for card in card_codes %}
-            {% if card.img %}
-            <button
-                    type="button"
-                    class="card"
-                    onclick="setPayCardCode('{{ card.card_code }}', this)">
-                <img class="img-size" src="/static/{{ card.img }}">
-            </button>
-            {% endif %}
-            {% endfor %}
-        </div>
-    </section>
-
-    <!-- 결제 버튼 -->
-    <section class="confirmation">
-        <p>구매 조건을 확인하였으며 결제에 동의합니다.</p>
-        <button class="pay-button">결제 요청</button>
-    </section>
-
-</div>
-
 <script>
-    let card_code = null;
+    var url = "https://pgapi.korpay.com";
 
-    const token = "{{ token }}";
-    const shopTransactionId = "{{ shop_transaction_id }}";
-    const amount = {{ purchase_price }};
+    $(function () {
+        $("#payBtn").click(function () {
+            if ($("input[name=id]").val() === "") {
+                alert("결제 방법을 선택하세요.");
+                return;
+            }
 
-    document.querySelector('.pay-button').addEventListener('click', async () => {
-        if (!card_code) {
-            alert('결제 수단을 선택해주세요.');
-            return;
-        }
-
-        if (!document.getElementById('agreement').checked) {
-            alert('약관에 동의해주세요.');
-            return;
-        }
-
-        const data = {
-            product_name: "{{ product_name }}",
-            amount: amount,
-            card_code: card_code,
-            installment: document.getElementById('installment').value,
-            shop_transaction_id: shopTransactionId
-        };
-
-        const res = await fetch("http://localhost:8080/api/v1/link/request/${token}", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(data)
+            $("#mask").fadeIn(0).fadeTo("slow", 0.6);
+            document.payInit.action = url + "/payInit_hash.korpay";
+            document.payInit.submit();
+            $(".window").show();
         });
 
-        const result = await res.json();
-
-        if (result.redirectUrl) {
-            window.open(result.redirectUrl, "_blank");
-        }
+        window.addEventListener("message", returnData, false);
     });
 
-    function toggleSection(id) {
-        const el = document.getElementById(id);
-        el.style.display = el.style.display === "none" ? "block" : "none";
-    }
-
-    function setPayCardCode(code, el) {
-        card_code = code;
-        document.querySelectorAll('.card').forEach(c => c.classList.remove('is-active'));
-        el.classList.add('is-active');
+    function returnData(e) {
+        if (e.data !== "") {
+            const div = document.createElement("div");
+            div.innerHTML = e.data;
+            document.body.appendChild(div);
+            document.transRslt.submit();
+        }
+        $("#mask, .window").hide();
+        $("#pay_frame").attr("src", "");
     }
 </script>
+
+<form name="payInit" method="post" target="pay_frame">
+    <input type="hidden" name="ediDate" value="{{ edi_date }}">
+    <input type="hidden" name="hashStr" value="{{ hash_string }}">
+    <input type="hidden" name="id" value="{{ merchant_id }}">
+    <input type="hidden" name="payMethod" value="card">
+    <input type="hidden" name="returnUrl" value="{{ return_url }}">
+
+    <table>
+        <tr>
+            <td>상품명</td>
+            <td><input type="text" name="goodsName" value="{{ goods_name }}"></td>
+        </tr>
+        <tr>
+            <td>주문번호</td>
+            <td><input type="text" name="orderNo" value="{{ moid }}"></td>
+        </tr>
+        <tr>
+            <td>결제금액</td>
+            <td><input type="text" name="amt" value="{{ price }}"></td>
+        </tr>
+        <tr>
+            <td>구매자명</td>
+            <td><input type="text" name="buyerName" value="{{ buyer_name }}"></td>
+        </tr>
+        <tr>
+            <td>전화번호</td>
+            <td><input type="text" name="buyerTel" value="{{ buyer_tel }}"></td>
+        </tr>
+        <tr>
+            <td>이메일</td>
+            <td><input type="text" name="buyerEmail" value="{{ buyer_email }}"></td>
+        </tr>
+    </table>
+</form>
+
+<a href="#" id="payBtn">결제하기</a>
+
+<div id="mask"></div>
+<div class="window">
+    <iframe name="pay_frame" style="width:100%; height:100%" frameborder="0"></iframe>
+</div>
 </body>
 </html>

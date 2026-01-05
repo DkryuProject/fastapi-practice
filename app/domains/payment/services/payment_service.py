@@ -41,6 +41,10 @@ class PaymentService:
         return PaymentCRUD.get_payment(db, payment_id)
 
     @staticmethod
+    def get_link_payment_result(db: Session, payment_id: int):
+        return PaymentCRUD.get_link_payment_result_by_payment_id(db, payment_id)
+
+    @staticmethod
     def get_list(db: Session, skip=0, limit=50):
         return PaymentCRUD.get_list(db, skip, limit)
 
@@ -121,9 +125,16 @@ class PaymentService:
             raise
 
     @staticmethod
-    def request_link_payment(db: Session, payment_id: int, data: dict, cert_page_url: str):
+    def request_link_payment(db: Session, token: str, data: dict):
         try:
-            result = PaymentCRUD.save_link_request(db, payment_id, data, cert_page_url)
+            link = PaymentService.get_payment_view_by_token(db, token)
+
+            payment = link.payment
+
+            if not payment:
+                raise HTTPException(status_code=404, detail="잘못된 데이터입니다.")
+
+            result = PaymentCRUD.save_link_request(db, payment.id, data)
 
             return result
 
@@ -132,9 +143,16 @@ class PaymentService:
             raise
 
     @staticmethod
-    def result_link_payment(db: Session, body: dict):
+    async def result_link_payment(db: Session, token: str, form):
         try:
-            result = PaymentCRUD.save_link_result(db, payment_id, body)
+            link = PaymentService.get_payment_view_by_token(db, token)
+
+            payment = link.payment
+
+            if not payment:
+                raise HTTPException(status_code=404, detail="잘못된 데이터입니다.")
+
+            result = PaymentCRUD.save_link_result(db, payment.id, form)
 
             return result
 

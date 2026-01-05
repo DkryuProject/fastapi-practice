@@ -19,6 +19,7 @@ from .cash_receipt_schemas import (
 )
 from .payment_link_schemas import (
     LinkPaymentCreateRequest,
+    LinkPaymentCancelRequest,
     LinkPaymentResult
 )
 from .payment_sms_schemas import (

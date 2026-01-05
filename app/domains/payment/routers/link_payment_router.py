@@ -10,7 +10,7 @@ from io import BytesIO
 from app.domains.payment.interfaces.link_provider import LinkProvider
 from app.domains.payment.services.payment_service import PaymentService
 from app.domains.payment.services.link_payment_service import LinkPaymentService
-from app.domains.payment.schemas import LinkPaymentCreateRequest
+from app.domains.payment.schemas import LinkPaymentCreateRequest, LinkPaymentCancelRequest
 from app.domains.view.schemas import LinkPaymentViewRequest
 from app.core.security import get_current_user
 from app.domains.user.models import User
@@ -43,53 +43,45 @@ def create_link_payment(
 async def request_link_payment(
         token: str,
         data: LinkPaymentViewRequest,
-        provider: LinkProvider = Depends(get_link_provider),
         db: Session = Depends(get_db)
 ):
-    service = LinkPaymentService(provider)
-    payment = await service.request(db, token, data)
-
-    if not payment:
-        raise HTTPException(status_code=500, detail="link request failed")
-
-    return payment
+    result = PaymentService.request_link_payment(db, token, data)
+    return result
 
 
 @router.post('/result/{token}', response_class=HTMLResponse)
 async def result_link_payment(
         token: str,
         request: Request,
-        provider: LinkProvider = Depends(get_link_provider),
         db: Session = Depends(get_db)
 ):
-    service = LinkPaymentService(provider)
-    payment = await service.handle_link_payment_result(
+    form = await request.form()
+
+    payment = await PaymentService.result_link_payment(
         db=db,
         token=token,
-        params=request.query_params
+        form=form
     )
 
     if not payment:
-        raise HTTPException(status_code=500, detail="link request failed")
+        raise HTTPException(status_code=500, detail="link result failed")
 
     return {"success": "success"}
 
 
+@router.post('/cancel')
+async def cancel_link_payment(
+        payload: LinkPaymentCancelRequest,
+        provider: LinkProvider = Depends(get_link_provider),
+        db: Session = Depends(get_db)
+):
+    service = LinkPaymentService(provider)
+    payment = await service.cancel_link_payment(db, payload)
 
-#@router.post('/cancel')
-#async def cancel_link_payment(
-#        token: str,
-#        payload: PaymentCancelRequest,
-#        provider: LinkProvider = Depends(get_link_provider),
-#        db: Session = Depends(get_db)
-#):
-#    service = LinkPaymentService(provider)
-#    payment = await service.cancel_link_payment(db, payload.shop_transaction_id)
+    if not payment:
+        raise HTTPException(status_code=500, detail="link cancel failed")
 
-#    if not payment:
-#        raise HTTPException(status_code=500, detail="link request failed")
-
-#    return {"success": "success"}
+    return {"success": "success"}
 
 
 @router.post("/api/payment/receipt")
