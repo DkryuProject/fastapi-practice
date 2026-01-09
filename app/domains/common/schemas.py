@@ -2,12 +2,9 @@ from pydantic import BaseModel, ConfigDict
 
 
 class SMSSendRequest(BaseModel):
-    action: str
-    sender: str
-    receiver: str
-    subject: str
-    msg: str
-    msg_type: str
+    phone: str
+    title: str
+    message: str
 
     model_config = ConfigDict(from_attributes=True)
 

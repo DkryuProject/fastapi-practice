@@ -30,6 +30,10 @@ class Settings(BaseSettings):
     UseStaticIP: str
     UseLocalTimeYN: str
 
+    SMS_SEND_KEY: str
+    SMS_SEND_ID: str
+    SMS_SEND_NUMBER: str
+
     class Config:
         env_file = ".env"
 

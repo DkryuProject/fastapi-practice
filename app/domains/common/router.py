@@ -1,19 +1,20 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import List
 
 from app.core.database import get_db
-from app.domains.payment.services.payment_service import PaymentService
-from app.domains.payment.schemas import PaymentCreate, PaymentResponse, PaymentUpdate
+from app.domains.common.schemas import SMSSendRequest, KakaoSendRequest
+from app.core.security import get_current_user
+from .services import sms_service
+
 
 router = APIRouter()
 
 
-@router.get("/list", response_model=List[PaymentResponse])
-def list_payments(skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
-    return PaymentService.get_list(db, skip, limit)
-
-
-@router.post("/create", response_model=PaymentResponse, include_in_schema=False)
-def create_payment(data: PaymentCreate, db: Session = Depends(get_db)):
-    return PaymentService.create_payment(db, data)
+@router.post("/sms/send", summary="SMS 전송")
+async def send_sms(
+    data: SMSSendRequest,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    return await sms_service.send(db, current_user.id, data.phone, data.title, data.message)
