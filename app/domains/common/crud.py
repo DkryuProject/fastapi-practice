@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
-from ..models import SMSLog
+from .models import SendLog
 
 
-def create_sms_log(
+def create_send_log(
     db: Session,
     *,
     user_id: int,
@@ -16,7 +16,7 @@ def create_sms_log(
     success_cnt: int | None,
     msg_type: str | None,
 ):
-    sms_log = SMSLog(
+    sms_log = SendLog(
         user_id=user_id,
         phone=phone,
         title=title,

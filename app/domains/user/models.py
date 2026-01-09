@@ -7,7 +7,6 @@ from datetime import datetime
 
 from app.core.database import Base
 from app.core.models_base import TimestampMixin
-from app.domains.common.models import SMSLog, KakaoSendLog
 
 class UserStatusEnum(str, enum.Enum):
     ACTIVE = "ACTIVE"
@@ -45,8 +44,7 @@ class User(Base, TimestampMixin):
     documents = relationship("UserDocument", back_populates="user", cascade="all, delete-orphan")
     payments = relationship("Payment", back_populates="user", cascade="all, delete-orphan")
     cashbill_user = relationship("CashBillUser", uselist=False, back_populates="user", cascade="all, delete-orphan")
-    sms_send_logs = relationship("SMSLog", back_populates="user", cascade="all, delete-orphan")
-    kakao_send_logs = relationship("KakaoSendLog", back_populates="user", cascade="all, delete-orphan")
+    send_logs = relationship("SendLog", back_populates="user", cascade="all, delete-orphan")
 
 # -----------------------------
 # Refresh Token

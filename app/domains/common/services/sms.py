@@ -3,7 +3,7 @@ import httpx
 from sqlalchemy.orm import Session
 from app.core.exceptions import AppException
 from app.core.config import settings
-from ..crud import create_sms_log
+from ..crud import create_send_log
 
 
 ALIGO_SEND_URL = "https://apis.aligo.in/send/"
@@ -33,13 +33,13 @@ class Sms:
                         "receiver": phone,
                         "sender": settings.SMS_SEND_NUMBER,
                         "title": title,
-                        "msg_type": "LMS",
+                        "msg_type": "sms",
                     }
                 )
 
             body = response.json()
 
-            create_sms_log(
+            create_send_log(
                 db,
                 user_id=user_id,
                 phone=phone,

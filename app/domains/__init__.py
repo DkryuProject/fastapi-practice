@@ -1,2 +1,2 @@
-from .common.models import SMSLog, KakaoSendLog
+from .common.models import SendLog
 from .payment.models import Payment
