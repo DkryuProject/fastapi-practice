@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 
-from app.domains.payment.interfaces.cash_receipt_provider import CashReceiptProvider
+from app.domains.payment.interfaces.cash_provider import CashReceiptProvider
 from app.domains.payment.services.cash_receipt_service import CashReceiptService
 from app.domains.payment.schemas import CashBillUserRequest, CashReceiptCreate, PaymentResponse
 from app.core.security import get_current_user

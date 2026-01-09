@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from app.domains.payment.schemas import (
     PaymentCreate, PaymentLogCreate, CashBillUserRequest, CashReceiptCreate
 )
-from app.domains.payment.interfaces.cash_receipt_provider import CashReceiptProviderInterface
+from app.domains.payment.interfaces.cash_provider import CashReceiptProviderInterface
 from app.domains.payment.services import PaymentService
 from app.domains.user.models import User
 
