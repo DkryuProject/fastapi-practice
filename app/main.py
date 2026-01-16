@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.openapi.utils import get_openapi
 from pathlib import Path
 
-from app.core.database import Base, engine
+#from app.core.database import Base, engine
 from app.core.middleware import UserActionLogMiddleware
 from app.core.logging_config import setup_logging
 from app.scheduler import start_scheduler
@@ -44,7 +44,7 @@ app = FastAPI(
 
 @app.on_event("startup")
 def startup_event():
-    Base.metadata.create_all(bind=engine)
+    #Base.metadata.create_all(bind=engine)
     start_scheduler()
 
 
