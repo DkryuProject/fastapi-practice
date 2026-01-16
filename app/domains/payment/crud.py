@@ -42,14 +42,19 @@ class PaymentCRUD:
         return db.query(Payment).filter(Payment.order_number == order_number).first()
 
     @staticmethod
-    def get_list(db: Session, skip=0, limit=50):
-        return (
+    def get_list(db: Session, skip: int, limit: int):
+        items = (
             db.query(Payment)
             .order_by(Payment.id.desc())
             .offset(skip)
             .limit(limit)
             .all()
         )
+        return items
+
+    @staticmethod
+    def get_total(db: Session):
+        return db.query(Payment).count()
 
     @staticmethod
     def update_payment(db: Session, db_obj: Payment, data: PaymentUpdate) -> Payment:

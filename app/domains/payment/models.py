@@ -8,7 +8,7 @@ class Payment(Base, TimestampMixin):
     __tablename__ = "payment"
 
     id = Column(Integer, primary_key=True, index=True)
-    paymnet_number = Column(String(30), unique=True, nullable=False, index=True)
+    payment_number = Column(String(30), unique=True, nullable=False, index=True)
 
     type = Column(String(20), nullable=False)
     amount = Column(Integer, nullable=False)

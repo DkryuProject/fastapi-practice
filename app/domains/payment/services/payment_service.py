@@ -45,8 +45,11 @@ class PaymentService:
         return PaymentCRUD.get_link_payment_result_by_payment_id(db, payment_id)
 
     @staticmethod
-    def get_list(db: Session, skip=0, limit=50):
-        return PaymentCRUD.get_list(db, skip, limit)
+    def get_list(db: Session, skip=1, limit=50):
+        items = PaymentCRUD.get_list(db, skip, limit)
+        total = PaymentCRUD.get_total(db)
+
+        return items, total
 
     @staticmethod
     def update_payment(db: Session, payment_id: int, payload: PaymentUpdate):
