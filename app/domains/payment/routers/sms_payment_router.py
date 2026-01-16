@@ -15,7 +15,7 @@ async def get_sms_provider() -> SMSProvider:
     return SMSProvider() 
 
 
-@router.post("/request", response_model=PaymentResponse)
+@router.post("/request", response_model=PaymentResponse, summary="SMS 전송")
 async def request_sms_payment(
     data: SMSPaymentRequest,
     db: Session = Depends(get_db),

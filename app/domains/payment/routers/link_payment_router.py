@@ -25,7 +25,7 @@ async def get_link_provider() -> LinkProvider:
     return LinkProvider()
 
 
-@router.post("/create")
+@router.post("/create", summary="링크 결제 URL 생성")
 def create_link_payment(
         data: LinkPaymentCreateRequest,
         db: Session = Depends(get_db),
@@ -39,7 +39,7 @@ def create_link_payment(
     return payment
 
 
-@router.post('/request/{token}')
+@router.post('/request/{token}', summary="링크 결제 요청 송신")
 async def request_link_payment(
         token: str,
         data: LinkPaymentViewRequest,
@@ -49,7 +49,7 @@ async def request_link_payment(
     return result
 
 
-@router.post('/result/{token}', response_class=HTMLResponse)
+@router.post('/result/{token}', response_class=HTMLResponse, summary="링크 결제 결과 수신")
 async def result_link_payment(
         token: str,
         request: Request,
@@ -69,7 +69,7 @@ async def result_link_payment(
     return {"success": "success"}
 
 
-@router.post('/cancel')
+@router.post('/cancel', summary="링크 결제 취소")
 async def cancel_link_payment(
         payload: LinkPaymentCancelRequest,
         provider: LinkProvider = Depends(get_link_provider),
