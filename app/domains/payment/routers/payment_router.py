@@ -14,7 +14,7 @@ PaymentPageResponse = Page[PaymentResponse]
 router = APIRouter()
 
 
-@router.get("/list", response_model=PaymentPageResponse)
+@router.get("/list", response_model=PaymentPageResponse, summary="결재 리스트 조회")
 def list_payments(    
     page: int = 1,
     size: int = 50, 
@@ -23,7 +23,12 @@ def list_payments(
 ):
     skip = (page - 1) * size
 
-    items, total = PaymentService.get_list(db, skip, size)
+    items, total = PaymentService.get_list(
+        db=db,
+        skip=skip,
+        limit=size,
+        current_user=current_user,
+    )
 
     return {
         "items": items,

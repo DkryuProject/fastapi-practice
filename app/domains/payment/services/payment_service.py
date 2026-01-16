@@ -45,9 +45,21 @@ class PaymentService:
         return PaymentCRUD.get_link_payment_result_by_payment_id(db, payment_id)
 
     @staticmethod
-    def get_list(db: Session, skip=1, limit=50):
-        items = PaymentCRUD.get_list(db, skip, limit)
-        total = PaymentCRUD.get_total(db)
+    def get_list(
+        db: Session,
+        skip: int,
+        limit: int,
+        current_user,
+    ):
+        #if current_user.role == "ADMIN":
+        #    user_id = None
+        #elif current_user.role == "USER":    
+        user_id = current_user.id
+        #else:
+        #    raise HTTPException(status_code=403)
+
+        items = PaymentCRUD.get_list(db, skip, limit, user_id)
+        total = PaymentCRUD.get_total(db, user_id)
 
         return items, total
 

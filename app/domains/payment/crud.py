@@ -42,9 +42,19 @@ class PaymentCRUD:
         return db.query(Payment).filter(Payment.order_number == order_number).first()
 
     @staticmethod
-    def get_list(db: Session, skip: int, limit: int):
+    def get_list(
+        db: Session, 
+        skip: int, 
+        limit: int,
+        user_id: int | None = None,
+    ):
+        query = db.query(Payment)
+
+        if user_id is not None:
+            query = query.filter(Payment.user_id == user_id)
+
         items = (
-            db.query(Payment)
+            query
             .order_by(Payment.id.desc())
             .offset(skip)
             .limit(limit)
@@ -53,8 +63,16 @@ class PaymentCRUD:
         return items
 
     @staticmethod
-    def get_total(db: Session):
-        return db.query(Payment).count()
+    def get_total(
+        db: Session,
+        user_id: int | None = None,
+    ):
+        query = db.query(Payment)
+
+        if user_id is not None:
+            query = query.filter(Payment.user_id == user_id)
+
+        return query.count()
 
     @staticmethod
     def update_payment(db: Session, db_obj: Payment, data: PaymentUpdate) -> Payment:
