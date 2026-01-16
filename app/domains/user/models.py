@@ -1,6 +1,6 @@
 import enum
 from sqlalchemy import (
-    Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Enum
+    Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Enum, TIMESTAMP
 )
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -136,6 +136,19 @@ class UserPushToken(Base, TimestampMixin):
     revoked = Column(Boolean, default=False)
 
     user = relationship("User", back_populates="push_tokens")
+
+
+class UserPushMessage(Base, TimestampMixin):
+    __tablename__ = "user_push_message"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, nullable=False)
+    topic = Column(String(255), nullable=True)
+    title = Column(String(255), nullable=False)
+    body = Column(Text, nullable=False)
+    is_sent = Column(Boolean, default=False)
+    is_read = Column(Boolean, default=False)
+    send_at = Column(TIMESTAMP, nullable=True)
 
 
 # -----------------------------
