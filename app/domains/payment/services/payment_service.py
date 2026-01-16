@@ -37,8 +37,20 @@ class PaymentService:
         return PaymentCRUD.create_payment(db, payload)
 
     @staticmethod
-    def get_payment(db: Session, payment_id: int):
-        return PaymentCRUD.get_payment(db, payment_id)
+    def get_payment(
+        db: Session,
+        payment_id: int,
+        current_user,
+    ):
+        obj = PaymentCRUD.get_payment(db, payment_id)
+
+        if not obj:
+            return None
+
+        if current_user.role != "ADMIN" and obj.user_id != current_user.id:
+            raise HTTPException(status_code=403, detail="Forbidden")
+
+        return obj
 
     @staticmethod
     def get_link_payment_result(db: Session, payment_id: int):
@@ -64,14 +76,28 @@ class PaymentService:
         return items, total
 
     @staticmethod
-    def update_payment(db: Session, payment_id: int, payload: PaymentUpdate):
-        db_obj = PaymentCRUD.get_payment(db, payment_id)
-        if not db_obj:
+    def update_payment(
+        db: Session, 
+        payment_id: int, 
+        payload: PaymentUpdate,
+        current_user,
+    ):
+        obj = PaymentCRUD.get_payment(db, payment_id)
+
+        if not obj:
             return None
-        return PaymentCRUD.update_payment(db, db_obj, payload)
+
+        if current_user.role != "ADMIN" and obj.user_id != current_user.id:
+            raise HTTPException(status_code=403, detail="Forbidden")
+        
+        return PaymentCRUD.update_payment(db, obj, payload)
 
     @staticmethod
-    def delete_payment(db: Session, payment_id: int):
+    def delete_payment(
+        db: Session, 
+        payment_id: int,
+        current_user,
+    ):
         return PaymentCRUD.delete_payment(db, payment_id)
 
     @staticmethod

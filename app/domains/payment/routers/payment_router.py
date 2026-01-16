@@ -38,28 +38,45 @@ def list_payments(
         "has_next": page * size < total,
     }
 
-@router.post("/create", response_model=PaymentResponse, include_in_schema=False)
+@router.post("/create", response_model=PaymentResponse, summary="결제 생성", include_in_schema=False)
 def create_payment(data: PaymentCreate, db: Session = Depends(get_db)):
     return PaymentService.create_payment(db, data)
 
 
-@router.get("/{payment_id}", response_model=PaymentResponse)
-def get_payment(payment_id: int, db: Session = Depends(get_db)):
-    obj = PaymentService.get_payment(db, payment_id)
+@router.get("/{payment_id}", response_model=PaymentResponse, summary="결제 상세 조회")
+def get_payment(
+    payment_id: int, 
+    current_user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    obj = PaymentService.get_payment(db, payment_id, current_user)
+
     if not obj:
         raise HTTPException(status_code=404, detail="payment not found")
+    
     return obj
 
 
-@router.patch("/{payment_id}", response_model=PaymentResponse)
-def update_payment(payment_id: int, data: PaymentUpdate, db: Session = Depends(get_db)):
-    obj = PaymentService.update_payment(db, payment_id, data)
+@router.patch("/{payment_id}", response_model=PaymentResponse, summary="결제 수정")
+def update_payment(
+    payment_id: int, 
+    data: PaymentUpdate, 
+    current_user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    obj = PaymentService.update_payment(db, payment_id, data, current_user)
+
     if not obj:
         raise HTTPException(status_code=404, detail="payment not found")
+    
     return obj
 
 
-@router.delete("/{payment_id}")
-def delete_payment(payment_id: int, db: Session = Depends(get_db)):
-    PaymentService.delete_payment(db, payment_id)
-    return {"msg": "deleted"}
+@router.delete("/{payment_id}", summary="결제 삭제")
+def delete_payment(
+    payment_id: int, 
+    current_user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    PaymentService.delete_payment(db, payment_id, current_user)
+    return {"message": "deleted"}
