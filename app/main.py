@@ -1,12 +1,13 @@
 import logging
 import json
+from pathlib import Path
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.openapi.utils import get_openapi
-from pathlib import Path
+from fastapi.exceptions import HTTPException, RequestValidationError
 
-#from app.core.database import Base, engine
 from app.core.middleware import UserActionLogMiddleware
 from app.core.logging_config import setup_logging
 from app.scheduler import start_scheduler
@@ -22,17 +23,40 @@ from app.core.exception_handler import (
     validation_exception_handler
 )
 from app.core.exceptions import AppException
-from fastapi.exceptions import HTTPException, RequestValidationError
 from app.core.templates import templates
 
+# --------------------------------------------------
+# Logging
+# --------------------------------------------------
 setup_logging()
 logger = logging.getLogger("app")
 
+# --------------------------------------------------
+# Lifespan
+# --------------------------------------------------
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # ---------- Startup ----------
+    logger.info("🚀 Application startup")
+
+    # 스케줄러 시작
+    start_scheduler()
+
+    yield
+
+    # ---------- Shutdown ----------
+    logger.info("🛑 Application shutdown")
+    # 필요 시 scheduler 종료, DB dispose, Redis close 등 추가
+
+# --------------------------------------------------
+# FastAPI App
+# --------------------------------------------------
 app = FastAPI(
     title="FastAPI Example",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
     swagger_ui_parameters={
         "defaultModelsExpandDepth": -1,
         "displayRequestDuration": True,
@@ -41,27 +65,22 @@ app = FastAPI(
     }
 )
 
-
-@app.on_event("startup")
-def startup_event():
-    #Base.metadata.create_all(bind=engine)
-    start_scheduler()
-
-
-SENSITIVE_KEYS = {"password", "access_token", "refresh_token", "card_number", "expire_month"}
-MAX_BODY_LENGTH = 1000
-
-
-def safe_decode(body: bytes) -> str:
-    return body.decode("utf-8", errors="ignore")
-
+# --------------------------------------------------
+# Request / Response Full Logger Middleware
+# --------------------------------------------------
+SENSITIVE_KEYS = {
+    "password",
+    "access_token",
+    "refresh_token",
+    "card_number",
+    "expire_month"
+}
 
 def mask_sensitive(data: dict) -> dict:
     return {
         k: ("***" if k in SENSITIVE_KEYS else v)
         for k, v in data.items()
     }
-
 
 @app.middleware("http")
 async def full_logger(request: Request, call_next):
@@ -130,40 +149,57 @@ async def full_logger(request: Request, call_next):
         media_type=response.media_type
     )
 
-
+# --------------------------------------------------
+# Static Files
+# --------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 UPLOAD_DIR = BASE_DIR / "uploads"
-
 UPLOAD_DIR.mkdir(exist_ok=True)
 
 app.mount("/static", StaticFiles(directory=UPLOAD_DIR), name="static")
 
+# --------------------------------------------------
+# Middleware & Exception Handlers
+# --------------------------------------------------
 app.add_middleware(UserActionLogMiddleware)
+
 app.add_exception_handler(AppException, app_exception_handler)
 app.add_exception_handler(Exception, unhandled_exception_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
-# 라우터 등록 (tags 추가)
+# --------------------------------------------------
+# Routers
+# --------------------------------------------------
 app.include_router(user_router, prefix="/api/v1/user", tags=["User"])
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["Auth"])
 app.include_router(payment_router, prefix="/api/v1/payment", tags=["Payment"])
-app.include_router(view_router, prefix="/api/v1/view", tags=["View"], include_in_schema=False)
+app.include_router(
+    view_router,
+    prefix="/api/v1/view",
+    tags=["View"],
+    include_in_schema=False
+)
 app.include_router(common_router, prefix="/api/v1", tags=["Common"])
 
-# OpenAPI 커스터마이징
+# --------------------------------------------------
+# OpenAPI Customization
+# --------------------------------------------------
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
+
     openapi_schema = get_openapi(
         title="히엘페이 API",
         version="1.0.0",
         description="히엘페이 프로젝트",
         routes=app.routes,
     )
-    openapi_schema["info"]["x-logo"] = {"url": "https://example.com/logo.png"}
+    openapi_schema["info"]["x-logo"] = {
+        "url": "https://example.com/logo.png"
+    }
+
     app.openapi_schema = openapi_schema
     return app.openapi_schema
-
 
 app.openapi = custom_openapi
