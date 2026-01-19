@@ -31,6 +31,7 @@ from app.core.templates import templates
 setup_logging()
 logger = logging.getLogger("app")
 
+
 # --------------------------------------------------
 # Lifespan
 # --------------------------------------------------
@@ -47,6 +48,7 @@ async def lifespan(app: FastAPI):
     # ---------- Shutdown ----------
     logger.info("🛑 Application shutdown")
     # 필요 시 scheduler 종료, DB dispose, Redis close 등 추가
+
 
 # --------------------------------------------------
 # FastAPI App
@@ -76,11 +78,13 @@ SENSITIVE_KEYS = {
     "expire_month"
 }
 
+
 def mask_sensitive(data: dict) -> dict:
     return {
         k: ("***" if k in SENSITIVE_KEYS else v)
         for k, v in data.items()
     }
+
 
 @app.middleware("http")
 async def full_logger(request: Request, call_next):
@@ -149,6 +153,7 @@ async def full_logger(request: Request, call_next):
         media_type=response.media_type
     )
 
+
 # --------------------------------------------------
 # Static Files
 # --------------------------------------------------
@@ -182,6 +187,7 @@ app.include_router(
 )
 app.include_router(common_router, prefix="/api/v1", tags=["Common"])
 
+
 # --------------------------------------------------
 # OpenAPI Customization
 # --------------------------------------------------
@@ -201,5 +207,6 @@ def custom_openapi():
 
     app.openapi_schema = openapi_schema
     return app.openapi_schema
+
 
 app.openapi = custom_openapi
