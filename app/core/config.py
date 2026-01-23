@@ -34,6 +34,10 @@ class Settings(BaseSettings):
     SMS_SEND_ID: str
     SMS_SEND_NUMBER: str
 
+    MAX_IMAGE_SIZE_MB: int = 5
+    YOLO_MODEL_PATH: str = "weights/card_detector.pt"
+    OCR_LANG: str = "en"
+    
     class Config:
         env_file = ".env"
 

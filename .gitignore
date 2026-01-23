@@ -3,3 +3,5 @@
 logs/
 /.idea/
 /uploads/
+/runs/
+*/dataset/*
