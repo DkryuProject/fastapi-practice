@@ -16,7 +16,7 @@ from app.domains.auth.router import router as auth_router
 from app.domains.payment.routers import router as payment_router
 from app.domains.view.router import router as view_router
 from app.domains.common.router import router as common_router
-from app.ocr.router import router as ocr_router 
+from app.ocr.router import router as ocr_router
 from app.core.exception_handler import (
     app_exception_handler,
     unhandled_exception_handler,

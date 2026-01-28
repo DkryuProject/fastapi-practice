@@ -1,19 +1,27 @@
+# app/ocr/easyocr_reader.py
 from paddleocr import PaddleOCR
 
 
 class CardOCR:
     def __init__(self):
         self.ocr = PaddleOCR(
-            lang="en",
             use_angle_cls=True,
-            show_log=False
+            lang="en",
         )
 
     def read(self, image):
-        result = self.ocr.ocr(image, cls=True)
+        result = self.ocr.ocr(image)
         texts = []
 
-        for line in result[0]:
-            texts.append(line[1][0])
+        if not result:
+            return texts
 
-        return " ".join(texts)
+        for line in result:
+            for item in line:
+                text = item[1][0]
+                score = item[1][1]
+
+                if score > 0.6:
+                    texts.append(text)
+
+        return texts

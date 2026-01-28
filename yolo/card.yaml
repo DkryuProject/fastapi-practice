@@ -1,4 +1,5 @@
-path: dataset
+path: /Users/linkshops/Desktop/workspaces/my_projects/fastapi-practice/yolo/dataset
+
 train: images/train
 val: images/val
 

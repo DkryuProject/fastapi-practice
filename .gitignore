@@ -5,3 +5,5 @@ logs/
 /uploads/
 /runs/
 */dataset/*
+/venv/
+/.python-version
